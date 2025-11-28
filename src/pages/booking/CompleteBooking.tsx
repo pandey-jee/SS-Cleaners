@@ -264,11 +264,15 @@ const CompleteBooking = () => {
 
       const estimatedPrice = calculateEstimatedPrice();
 
-      // Create booking
+      // Get authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Create booking with user_id if authenticated
       const { data: booking, error: bookingError } = await supabase
         .from("bookings")
         .insert({
           enquiry_id: enquiry.id,
+          user_id: user?.id || null, // Link to authenticated user
           property_type: validatedData.property_type,
           property_size_sqft: validatedData.property_size_sqft,
           number_of_rooms: validatedData.number_of_rooms,

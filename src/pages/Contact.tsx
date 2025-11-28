@@ -40,13 +40,17 @@ const Contact = () => {
     setLoading(true);
     
     try {
+      // Get authenticated user
+      const { data: { user } } = await supabase.auth.getUser();
+      
       // Validate form data
       const validatedData = contactSchema.parse(formData);
       
-      // Insert enquiry into database
+      // Insert enquiry into database with user_id if authenticated
       const { data: enquiry, error: enquiryError } = await supabase
         .from('enquiries')
         .insert({
+          user_id: user?.id || null, // Link to authenticated user
           name: validatedData.name,
           email: validatedData.email,
           phone: validatedData.phone,

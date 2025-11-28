@@ -21,6 +21,14 @@ import AdminServices from "./pages/admin/AdminServices";
 import AdminPricing from "./pages/admin/AdminPricing";
 import AdminGallery from "./pages/admin/AdminGallery";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
+import Profile from "./pages/Profile";
+import MyBookings from "./pages/MyBookings";
+import BookingDetail from "./pages/BookingDetail";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 import MockCheckout from "./pages/payment/MockCheckout";
 import PaymentSuccess from "./pages/payment/Success";
 import PaymentCancel from "./pages/payment/Cancel";
@@ -41,6 +49,25 @@ const App = () => (
             <Route path="/services" element={<Services />} />
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/signup" element={<Signup />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/profile" element={
+              <ProtectedRoute>
+                <Profile />
+              </ProtectedRoute>
+            } />
+            <Route path="/bookings" element={
+              <ProtectedRoute>
+                <MyBookings />
+              </ProtectedRoute>
+            } />
+            <Route path="/bookings/:id" element={
+              <ProtectedRoute>
+                <BookingDetail />
+              </ProtectedRoute>
+            } />
             <Route path="/services/:slug" element={<ServiceDetail />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
