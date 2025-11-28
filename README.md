@@ -1,73 +1,127 @@
-# Welcome to your Lovable project
+# SS PureCare - Professional Cleaning Services
 
-## Project info
+A modern booking and management platform for professional cleaning services with real-time customer communication.
 
-**URL**: https://lovable.dev/projects/be2909a7-fe88-42cc-865d-1d2281cbb94f
+## 🌟 Features
 
-## How can I edit this code?
+### Customer Portal
+- **User Authentication** - Email/password + Google OAuth signup/login with email verification
+- **Service Booking** - Easy online booking for house cleaning, office cleaning, and water tank services
+- **My Bookings** - View all bookings with detailed information and status tracking
+- **Real-time Chat** - Communicate directly with support team through chat widget
+- **Profile Management** - Editable user profiles with contact information
+- **Password Recovery** - Forgot password and reset functionality
 
-There are several ways of editing your application.
+### Admin Portal
+- **Dashboard** - Overview of leads, enquiries, and bookings
+- **Lead Management** - Track and manage customer leads from chatbot
+- **Enquiry Management** - Handle customer service enquiries with real-time chat
+- **Booking Management** - Create and manage service bookings
+- **Service Management** - Configure services and pricing dynamically
+- **Gallery Management** - Upload and manage service portfolio images
 
-**Use Lovable**
+### Technical Features
+- **Real-time Updates** - Supabase real-time subscriptions for chat and notifications
+- **Email Notifications** - Automated emails for enquiries, bookings, and chat messages
+- **Row-Level Security** - Secure data access with Supabase RLS policies
+- **Image Optimization** - Automatic image compression for gallery uploads
+- **Responsive Design** - Mobile-first design with Tailwind CSS
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/be2909a7-fe88-42cc-865d-1d2281cbb94f) and start prompting.
+## 🚀 Tech Stack
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Frontend**: React + TypeScript + Vite
+- **UI Components**: shadcn/ui + Tailwind CSS
+- **Backend**: Supabase (PostgreSQL + Auth + Storage + Edge Functions)
+- **Real-time**: Supabase Realtime
+- **Authentication**: Supabase Auth (Email + Google OAuth)
+- **Deployment**: Lovable.dev
 
-**Use your preferred IDE**
+## 📦 Installation
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+```bash
+# Install dependencies
+npm install
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+# Start development server
 npm run dev
+
+# Build for production
+npm run build
 ```
 
-**Edit a file directly in GitHub**
+## 🔧 Environment Setup
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+Create a `.env` file with your Supabase credentials:
 
-**Use GitHub Codespaces**
+```env
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 📚 Documentation
 
-## What technologies are used for this project?
+- **AUTHENTICATION_SETUP.md** - Complete guide for setting up authentication
+- **NEXT_STEPS.md** - Post-installation setup and testing guide
 
-This project is built with:
+## 🗄️ Database Schema
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+The project uses Supabase with the following main tables:
+- `leads` - Customer leads from chatbot
+- `enquiries` - Service enquiry requests
+- `bookings` - Service bookings with pricing
+- `conversations` - Chat conversations
+- `messages` - Chat messages
+- `services` - Service catalog
+- `pricing_matrix` - Dynamic pricing configuration
+- `gallery_images` - Service portfolio images
+- `user_roles` - Admin role management
 
-## How can I deploy this project?
+## 🔐 Authentication
 
-Simply open [Lovable](https://lovable.dev/projects/be2909a7-fe88-42cc-865d-1d2281cbb94f) and click on Share -> Publish.
+The app supports:
+- Email/Password authentication with email verification
+- Google OAuth (configured for external users)
+- Protected routes requiring authentication
+- Row-level security for data access
 
-## Can I connect a custom domain to my Lovable project?
+## 🎨 Project Structure
 
-Yes, you can!
+```
+src/
+├── components/
+│   ├── admin/          # Admin portal components
+│   ├── auth/           # Authentication components
+│   ├── chat/           # Chat widget components
+│   ├── home/           # Homepage sections
+│   ├── layout/         # Navigation and footer
+│   └── ui/             # shadcn/ui components
+├── pages/
+│   ├── admin/          # Admin dashboard pages
+│   ├── booking/        # Booking pages
+│   ├── payment/        # Payment pages
+│   ├── services/       # Service detail pages
+│   └── *.tsx           # Public pages
+├── hooks/              # Custom React hooks
+├── integrations/       # Supabase client setup
+└── lib/                # Utility functions
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+supabase/
+├── functions/          # Edge functions
+└── migrations/         # Database migrations
+```
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+## 🚀 Deployment
+
+The project is deployed on Lovable.dev. To deploy:
+
+1. Push changes to the main branch
+2. Visit your Lovable project dashboard
+3. Click Share → Publish
+
+## 📞 Support
+
+For issues or questions, please contact the development team.
+
+## 📄 License
+
+All rights reserved © SS PureCare
