@@ -1,0 +1,184 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const APP_URL = Deno.env.get("APP_URL") || "http://localhost:5173";
+
+interface ChatNotificationRequest {
+  conversationId: string;
+  recipientEmail: string;
+}
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    const { conversationId, recipientEmail }: ChatNotificationRequest = await req.json();
+
+    // Fetch conversation details
+    const { data: conversation, error: convError } = await supabaseClient
+      .from("conversations")
+      .select("*, enquiry:enquiries!enquiry_id(*)")
+      .eq("id", conversationId)
+      .single();
+
+    if (convError || !conversation) {
+      throw new Error("Conversation not found");
+    }
+
+    // Fetch the latest message
+    const { data: latestMessage, error: messageError } = await supabaseClient
+      .from("messages")
+      .select("*")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    if (messageError || !latestMessage) {
+      throw new Error("Message not found");
+    }
+
+    const enquiry = conversation.enquiry;
+    const isAdminMessage = latestMessage.sender_type === "admin";
+    const recipientName = isAdminMessage ? enquiry.name : "Admin";
+
+    // Send email notification
+    const emailResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: "SS PureCare <notifications@sspurecare.com>",
+        to: [recipientEmail],
+        subject: `New Message from ${isAdminMessage ? "SS PureCare Team" : enquiry.name}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+              <h1 style="color: white; margin: 0; font-size: 24px;">💬 New Message</h1>
+            </div>
+
+            <div style="background-color: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px;">
+              <p style="font-size: 16px; color: #374151; margin-bottom: 20px;">
+                Hi ${recipientName},
+              </p>
+              
+              <p style="font-size: 16px; color: #374151; line-height: 1.6;">
+                You have a new message ${isAdminMessage ? "from our support team" : `from ${enquiry.name}`} regarding your enquiry.
+              </p>
+
+              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 25px 0; border-left: 4px solid #667eea;">
+                <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;">
+                  ${isAdminMessage ? "Support Team" : enquiry.name}
+                </p>
+                <p style="margin: 0; color: #374151; font-size: 16px; line-height: 1.6;">
+                  "${latestMessage.message_content}"
+                </p>
+                <p style="margin: 15px 0 0 0; color: #9ca3af; font-size: 12px;">
+                  ${new Date(latestMessage.created_at).toLocaleString("en-US", {
+                    weekday: "short",
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              </div>
+
+              <div style="background-color: #eff6ff; padding: 20px; border-radius: 8px; margin: 25px 0;">
+                <h3 style="margin-top: 0; color: #1e40af; font-size: 16px;">📋 Enquiry Reference</h3>
+                <p style="margin: 5px 0; color: #374151;">
+                  <strong>ID:</strong> #${enquiry.id.slice(0, 8).toUpperCase()}
+                </p>
+                <p style="margin: 5px 0; color: #374151;">
+                  <strong>Service:</strong> ${enquiry.service_required.replace(/-/g, " ")}
+                </p>
+              </div>
+
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${APP_URL}${isAdminMessage ? "/contact" : `/admin/enquiries/${enquiry.id}`}" 
+                   style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                          color: white; 
+                          padding: 14px 40px; 
+                          text-decoration: none; 
+                          border-radius: 8px; 
+                          display: inline-block;
+                          font-weight: bold;
+                          font-size: 16px;">
+                  View Conversation
+                </a>
+              </div>
+
+              <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">
+                ${isAdminMessage 
+                  ? "Our team is here to help! Reply to continue the conversation."
+                  : "Please respond to the customer as soon as possible."}
+              </p>
+            </div>
+
+            <div style="text-align: center; padding: 20px; color: #6b7280; font-size: 12px;">
+              <p style="margin: 5px 0;">
+                This is an automated notification from SS PureCare.
+              </p>
+              <p style="margin: 15px 0;">
+                <a href="${APP_URL}" style="color: #667eea; text-decoration: none;">Visit Our Website</a> | 
+                <a href="mailto:support@sspurecare.com" style="color: #667eea; text-decoration: none;">Contact Support</a>
+              </p>
+            </div>
+          </div>
+        `,
+      }),
+    });
+
+    if (!emailResponse.ok) {
+      const errorText = await emailResponse.text();
+      throw new Error(`Email sending failed: ${errorText}`);
+    }
+
+    // Log email notification
+    await supabaseClient.from("email_notifications").insert({
+      enquiry_id: enquiry.id,
+      recipient_email: recipientEmail,
+      email_type: "chat_notification",
+      subject: `New Message from ${isAdminMessage ? "SS PureCare Team" : enquiry.name}`,
+      status: "sent",
+    });
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Chat notification sent successfully",
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 200,
+      }
+    );
+  } catch (error) {
+    console.error("Error sending chat notification:", error);
+    return new Response(
+      JSON.stringify({
+        error: error.message,
+      }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: 500,
+      }
+    );
+  }
+});
