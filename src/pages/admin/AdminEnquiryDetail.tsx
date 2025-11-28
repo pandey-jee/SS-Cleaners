@@ -109,30 +109,39 @@ const AdminEnquiryDetail = () => {
       fetchEnquiryDetails();
       fetchConversationAndMessages();
       fetchTokens();
-      
-      // Set up real-time subscription for messages
-      const messagesSubscription = supabase
-        .channel(`messages_${id}`)
-        .on(
-          "postgres_changes",
-          {
-            event: "INSERT",
-            schema: "public",
-            table: "messages",
-            filter: `conversation_id=eq.${conversation?.id}`,
-          },
-          (payload) => {
-            setMessages((prev) => [...prev, payload.new as Message]);
-            scrollToBottom();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        messagesSubscription.unsubscribe();
-      };
     }
-  }, [id, conversation?.id]);
+  }, [id]);
+
+  // Separate useEffect for real-time subscription after conversation is loaded
+  useEffect(() => {
+    if (!conversation?.id) return;
+
+    // Set up real-time subscription for messages
+    const messagesSubscription = supabase
+      .channel(`messages_${conversation.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "INSERT",
+          schema: "public",
+          table: "messages",
+          filter: `conversation_id=eq.${conversation.id}`,
+        },
+        (payload) => {
+          console.log("New message received:", payload);
+          setMessages((prev) => [...prev, payload.new as Message]);
+          scrollToBottom();
+        }
+      )
+      .subscribe();
+
+    console.log("Real-time subscription active for conversation:", conversation.id);
+
+    return () => {
+      console.log("Unsubscribing from messages");
+      messagesSubscription.unsubscribe();
+    };
+  }, [conversation?.id]);
 
   useEffect(() => {
     scrollToBottom();
@@ -238,17 +247,24 @@ const AdminEnquiryDetail = () => {
       }
 
       setMessageContent("");
+      
+      // Refresh messages to ensure latest is displayed
+      await fetchConversationAndMessages();
+
       toast({
         title: "Message Sent",
         description: "Your message has been sent to the customer",
       });
 
-      // Send email notification
-      await supabase.functions.invoke("send-chat-notification", {
+      // Send email notification (don't await to avoid blocking UI)
+      supabase.functions.invoke("send-chat-notification", {
         body: {
           conversationId: conversation.id,
           recipientEmail: enquiry?.email,
         },
+      }).catch((error) => {
+        console.error("Failed to send email notification:", error);
+        // Don't show error to user, just log it
       });
     } catch (error: any) {
       console.error("Error sending message:", error);

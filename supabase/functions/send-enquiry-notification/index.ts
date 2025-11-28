@@ -1,7 +1,12 @@
+// @ts-ignore: Deno types
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore: Deno types
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
+// @ts-ignore: Deno global
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+// @ts-ignore: Deno global
+const APP_URL = Deno.env.get("APP_URL") || "http://localhost:5173";
 
 interface EnquiryNotificationRequest {
   enquiryId: string;
@@ -13,15 +18,18 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    // @ts-ignore: Deno global
     const supabaseClient = createClient(
+      // @ts-ignore: Deno global
       Deno.env.get("SUPABASE_URL") ?? "",
+      // @ts-ignore: Deno global
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
@@ -97,8 +105,10 @@ serve(async (req) => {
       await supabaseClient.from("email_notifications").insert({
         enquiry_id: enquiryId,
         recipient_email: enquiry.email,
-        email_type: "enquiry_confirmation",
+        recipient_type: "user",
+        notification_type: "enquiry_received",
         subject: "We've Received Your Enquiry - SS PureCare",
+        body: "Enquiry confirmation sent",
         status: "sent",
       });
     }
@@ -144,7 +154,7 @@ serve(async (req) => {
             </div>
 
             <p style="text-align: center; margin-top: 30px;">
-              <a href="${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '')}/admin/enquiries/${enquiryId}" 
+              <a href="${APP_URL}/admin/enquiries/${enquiryId}" 
                  style="background-color: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; display: inline-block;">
                 View Enquiry in Dashboard
               </a>
@@ -169,8 +179,10 @@ serve(async (req) => {
       await supabaseClient.from("email_notifications").insert({
         enquiry_id: enquiryId,
         recipient_email: "admin@sspurecare.com",
-        email_type: "admin_enquiry_notification",
+        recipient_type: "admin",
+        notification_type: "enquiry_received",
         subject: `New Enquiry Received - ${enquiry.service_required} in ${enquiry.city}`,
+        body: "Admin notification sent",
         status: "sent",
       });
     }
@@ -190,7 +202,7 @@ serve(async (req) => {
     console.error("Error sending enquiry notifications:", error);
     return new Response(
       JSON.stringify({
-        error: error.message,
+        error: error instanceof Error ? error.message : "Unknown error",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

@@ -1,7 +1,11 @@
+// @ts-ignore: Deno types
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore: Deno types
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
+// @ts-ignore: Deno global
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+// @ts-ignore: Deno global
 const APP_URL = Deno.env.get("APP_URL") || "http://localhost:5173";
 
 interface BookingLinkRequest {
@@ -16,14 +20,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    // @ts-ignore: Deno global
     const supabaseClient = createClient(
+      // @ts-ignore: Deno global
       Deno.env.get("SUPABASE_URL") ?? "",
+      // @ts-ignore: Deno global
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
@@ -152,8 +159,10 @@ serve(async (req) => {
     await supabaseClient.from("email_notifications").insert({
       enquiry_id: enquiryId,
       recipient_email: customerEmail,
-      email_type: "booking_link",
+      recipient_type: "user",
+      notification_type: "booking_link_sent",
       subject: "Complete Your Booking - Secure Link Inside",
+      body: "Booking link email sent",
       status: "sent",
     });
 
@@ -202,7 +211,7 @@ serve(async (req) => {
     console.error("Error sending booking link:", error);
     return new Response(
       JSON.stringify({
-        error: error.message,
+        error: error instanceof Error ? error.message : "Unknown error",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

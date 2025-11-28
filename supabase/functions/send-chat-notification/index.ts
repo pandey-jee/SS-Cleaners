@@ -1,7 +1,11 @@
+// @ts-ignore: Deno types
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore: Deno types
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
+// @ts-ignore: Deno global
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+// @ts-ignore: Deno global
 const APP_URL = Deno.env.get("APP_URL") || "http://localhost:5173";
 
 interface ChatNotificationRequest {
@@ -14,14 +18,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    // @ts-ignore: Deno global
     const supabaseClient = createClient(
+      // @ts-ignore: Deno global
       Deno.env.get("SUPABASE_URL") ?? "",
+      // @ts-ignore: Deno global
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
@@ -86,7 +93,7 @@ serve(async (req) => {
                   ${isAdminMessage ? "Support Team" : enquiry.name}
                 </p>
                 <p style="margin: 0; color: #374151; font-size: 16px; line-height: 1.6;">
-                  "${latestMessage.message_content}"
+                  "${latestMessage.message_text}"
                 </p>
                 <p style="margin: 15px 0 0 0; color: #9ca3af; font-size: 12px;">
                   ${new Date(latestMessage.created_at).toLocaleString("en-US", {
@@ -154,8 +161,10 @@ serve(async (req) => {
     await supabaseClient.from("email_notifications").insert({
       enquiry_id: enquiry.id,
       recipient_email: recipientEmail,
-      email_type: "chat_notification",
+      recipient_type: isAdminMessage ? "user" : "admin",
+      notification_type: "chat_message",
       subject: `New Message from ${isAdminMessage ? "SS PureCare Team" : enquiry.name}`,
+      body: latestMessage.message_text,
       status: "sent",
     });
 
@@ -173,7 +182,7 @@ serve(async (req) => {
     console.error("Error sending chat notification:", error);
     return new Response(
       JSON.stringify({
-        error: error.message,
+        error: error instanceof Error ? error.message : "Unknown error",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

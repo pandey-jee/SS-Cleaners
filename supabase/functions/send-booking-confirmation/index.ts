@@ -1,7 +1,11 @@
+// @ts-ignore: Deno types
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+// @ts-ignore: Deno types
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
+// @ts-ignore: Deno global
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+// @ts-ignore: Deno global
 const APP_URL = Deno.env.get("APP_URL") || "http://localhost:5173";
 
 interface BookingConfirmationRequest {
@@ -14,14 +18,17 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
+    // @ts-ignore: Deno global
     const supabaseClient = createClient(
+      // @ts-ignore: Deno global
       Deno.env.get("SUPABASE_URL") ?? "",
+      // @ts-ignore: Deno global
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
@@ -211,8 +218,10 @@ serve(async (req) => {
         enquiry_id: enquiryId,
         booking_id: bookingId,
         recipient_email: enquiry.email,
-        email_type: "booking_confirmation",
+        recipient_type: "user",
+        notification_type: "booking_confirmed",
         subject: "Booking Confirmed - SS PureCare",
+        body: "Booking confirmation sent",
         status: "sent",
       });
     }
@@ -280,8 +289,10 @@ serve(async (req) => {
         enquiry_id: enquiryId,
         booking_id: bookingId,
         recipient_email: "admin@sspurecare.com",
-        email_type: "admin_booking_notification",
+        recipient_type: "admin",
+        notification_type: "booking_created",
         subject: `New Booking Created - ${enquiry.name}`,
+        body: "Admin booking notification sent",
         status: "sent",
       });
     }
@@ -301,7 +312,7 @@ serve(async (req) => {
     console.error("Error sending booking confirmation:", error);
     return new Response(
       JSON.stringify({
-        error: error.message,
+        error: error instanceof Error ? error.message : "Unknown error",
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
