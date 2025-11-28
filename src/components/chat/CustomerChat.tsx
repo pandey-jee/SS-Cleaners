@@ -9,8 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 
 interface Message {
   id: string;
-  content: string;
+  message_text: string;
   sender_type: string;
+  sender_name: string | null;
   created_at: string;
 }
 
@@ -32,14 +33,25 @@ const CustomerChat = ({ enquiryId, bookingId, isOpen = false, onClose }: Custome
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    setIsChatOpen(isOpen);
+  }, [isOpen]);
+
+  useEffect(() => {
     checkAuth();
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated && (enquiryId || bookingId)) {
-      initializeChat();
+    if (isAuthenticated && (enquiryId || bookingId) && isChatOpen) {
+      const cleanup = initializeChat();
+      return () => {
+        if (cleanup) {
+          cleanup.then(cleanupFn => {
+            if (cleanupFn) cleanupFn();
+          });
+        }
+      };
     }
-  }, [isAuthenticated, enquiryId, bookingId]);
+  }, [isAuthenticated, enquiryId, bookingId, isChatOpen]);
 
   useEffect(() => {
     scrollToBottom();
@@ -106,7 +118,11 @@ const CustomerChat = ({ enquiryId, bookingId, isOpen = false, onClose }: Custome
 
       // Subscribe to real-time updates
       const channel = supabase
-        .channel(`customer-chat-${conversation.id}`)
+        .channel(`customer-chat-${conversation.id}`, {
+          config: {
+            broadcast: { self: true },
+          },
+        })
         .on(
           "postgres_changes",
           {
@@ -116,10 +132,20 @@ const CustomerChat = ({ enquiryId, bookingId, isOpen = false, onClose }: Custome
             filter: `conversation_id=eq.${conversation.id}`,
           },
           (payload) => {
-            setMessages((prev) => [...prev, payload.new as Message]);
+            console.log("Real-time message received:", payload);
+            const newMessage = payload.new as Message;
+            setMessages((prev) => {
+              // Check if message already exists to prevent duplicates
+              if (prev.some(msg => msg.id === newMessage.id)) {
+                return prev;
+              }
+              return [...prev, newMessage];
+            });
           }
         )
-        .subscribe();
+        .subscribe((status) => {
+          console.log("Subscription status:", status);
+        });
 
       return () => {
         supabase.removeChannel(channel);
@@ -138,19 +164,37 @@ const CustomerChat = ({ enquiryId, bookingId, isOpen = false, onClose }: Custome
     e.preventDefault();
     if (!newMessage.trim() || !conversationId) return;
 
+    const messageText = newMessage.trim();
+    setNewMessage(""); // Clear input immediately for better UX
     setLoading(true);
+    
     try {
-      const { error } = await supabase
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const { data, error } = await supabase
         .from("messages")
         .insert({
           conversation_id: conversationId,
-          content: newMessage.trim(),
-          sender_type: "customer",
-        });
+          message_text: messageText,
+          sender_type: "user",
+          sender_id: user?.id,
+          sender_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || "User",
+        })
+        .select()
+        .single();
 
       if (error) throw error;
 
-      setNewMessage("");
+      // Immediately add message to UI (real-time will handle duplicates)
+      if (data) {
+        setMessages((prev) => {
+          // Check if message already exists
+          if (prev.some(msg => msg.id === data.id)) {
+            return prev;
+          }
+          return [...prev, data as Message];
+        });
+      }
     } catch (error: any) {
       console.error("Error sending message:", error);
       toast({
@@ -158,6 +202,7 @@ const CustomerChat = ({ enquiryId, bookingId, isOpen = false, onClose }: Custome
         description: error.message || "Failed to send message",
         variant: "destructive",
       });
+      setNewMessage(messageText); // Restore message on error
     } finally {
       setLoading(false);
     }
@@ -236,17 +281,17 @@ const CustomerChat = ({ enquiryId, bookingId, isOpen = false, onClose }: Custome
                   <div
                     key={message.id}
                     className={`flex ${
-                      message.sender_type === "customer" ? "justify-end" : "justify-start"
+                      message.sender_type === "user" ? "justify-end" : "justify-start"
                     }`}
                   >
                     <div
                       className={`max-w-[80%] rounded-lg p-3 ${
-                        message.sender_type === "customer"
+                        message.sender_type === "user"
                           ? "bg-blue-600 text-white"
                           : "bg-gray-100 text-gray-900"
                       }`}
                     >
-                      <p className="text-sm">{message.content}</p>
+                      <p className="text-sm">{message.message_text}</p>
                       <p className="text-xs mt-1 opacity-70">
                         {new Date(message.created_at).toLocaleTimeString([], {
                           hour: "2-digit",

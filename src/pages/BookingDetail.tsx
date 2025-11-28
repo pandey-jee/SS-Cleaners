@@ -37,8 +37,9 @@ interface BookingDetail {
 
 interface Message {
   id: string;
-  content: string;
+  message_text: string;
   sender_type: string;
+  sender_name: string | null;
   created_at: string;
 }
 
@@ -157,7 +158,14 @@ const BookingDetail = () => {
           },
           (payload) => {
             if (payload.eventType === "INSERT") {
-              setMessages((prev) => [...prev, payload.new as Message]);
+              const newMessage = payload.new as Message;
+              setMessages((prev) => {
+                // Check if message already exists to prevent duplicates
+                if (prev.some(msg => msg.id === newMessage.id)) {
+                  return prev;
+                }
+                return [...prev, newMessage];
+              });
             }
           }
         )
@@ -332,7 +340,7 @@ const BookingDetail = () => {
                               {new Date(message.created_at).toLocaleString()}
                             </span>
                           </div>
-                          <p className="text-sm">{message.content}</p>
+                          <p className="text-sm">{message.message_text}</p>
                         </div>
                       ))}
                     </div>

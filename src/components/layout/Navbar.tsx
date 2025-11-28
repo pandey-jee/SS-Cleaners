@@ -128,7 +128,7 @@ const Navbar = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/bookings")}>
                     <Settings className="mr-2 h-4 w-4" />
-                    <span>My Bookings</span>
+                    <span>My Services</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
@@ -203,7 +203,7 @@ const Navbar = () => {
                     }}
                   >
                     <Settings className="mr-2 h-4 w-4" />
-                    My Bookings
+                    My Services
                   </Button>
                   <Button
                     variant="destructive"
