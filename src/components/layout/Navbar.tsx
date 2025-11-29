@@ -74,7 +74,7 @@ const Navbar = () => {
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <div className="text-2xl font-bold bg-gradient-cosmic bg-clip-text text-transparent animate-gradient">
-              SS PureCare
+              SS Cleaners
             </div>
           </Link>
 
@@ -84,7 +84,7 @@ const Navbar = () => {
               <Link
                 key={link.path}
                 to={link.path}
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+                className="rainbow-underline text-sm font-medium text-foreground hover:text-primary transition-colors"
               >
                 {link.name}
               </Link>
@@ -171,7 +171,7 @@ const Navbar = () => {
                 key={link.path}
                 to={link.path}
                 onClick={() => setIsOpen(false)}
-                className="text-sm font-medium text-foreground hover:text-primary transition-colors py-2"
+                className="rainbow-underline text-sm font-medium text-foreground hover:text-primary transition-colors py-2"
               >
                 {link.name}
               </Link>

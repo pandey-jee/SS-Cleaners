@@ -1,19 +1,138 @@
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Phone, ArrowRight } from "lucide-react";
+import { Phone, ArrowRight, ChevronLeft, ChevronRight } from "lucide-react";
 import heroImage from "@/assets/hero-cleaning.jpg";
+import houseCleaningImage from "@/assets/house-cleaning.jpg";
+import officeCleaningImage from "@/assets/office-cleaning.jpg";
 
 const Hero = () => {
+  const [currentSlide, setCurrentSlide] = useState(1); // Start at 1 (first real slide)
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
+  // Hero images array with multiple cleaning service images
+  const heroImages = [
+    heroImage,
+    houseCleaningImage,
+    officeCleaningImage,
+    "https://images.unsplash.com/photo-1581578731548-c64695cc6952?w=1920&h=1080&fit=crop&q=80", // Kitchen cleaning
+    "https://images.unsplash.com/photo-1628177142898-93e36e4e3a50?w=1920&h=1080&fit=crop&q=80", // Bathroom cleaning
+    "https://images.unsplash.com/photo-1563453392212-326f5e854473?w=1920&h=1080&fit=crop&q=80", // Window cleaning
+  ];
+
+  // Create cloned slides for infinite loop (Owl Carousel technique)
+  const clonedImages = [
+    heroImages[heroImages.length - 1], // Clone last slide at start
+    ...heroImages,
+    heroImages[0], // Clone first slide at end
+  ];
+
+  const totalSlides = heroImages.length;
+
+  const nextSlide = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentSlide((prev) => prev + 1);
+  };
+
+  const prevSlide = () => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentSlide((prev) => prev - 1);
+  };
+
+  const goToSlide = (index: number) => {
+    if (isTransitioning) return;
+    setIsTransitioning(true);
+    setCurrentSlide(index + 1); // +1 because of clone at start
+  };
+
+  // Handle infinite loop reset after transition
+  const handleTransitionEnd = () => {
+    setIsTransitioning(false);
+    
+    // If on cloned last slide (index 0), jump to real last slide
+    if (currentSlide === 0) {
+      setCurrentSlide(totalSlides);
+    }
+    // If on cloned first slide (index totalSlides + 1), jump to real first slide
+    else if (currentSlide === totalSlides + 1) {
+      setCurrentSlide(1);
+    }
+  };
+
+  // Calculate transform for horizontal sliding
+  const getTransformValue = () => {
+    return -currentSlide * 100;
+  };
+
+  // Get active indicator index
+  const getActiveIndicator = () => {
+    if (currentSlide === 0) return totalSlides - 1;
+    if (currentSlide === totalSlides + 1) return 0;
+    return currentSlide - 1;
+  };
+
   return (
     <section className="relative min-h-[600px] flex items-center overflow-hidden">
-      {/* Background Image with Overlay */}
-      <div className="absolute inset-0 z-0">
-        <img
-          src={heroImage}
-          alt="Professional cleaning services"
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/95 via-primary/80 to-primary/60 animate-gradient" style={{ backgroundSize: '200% 200%' }} />
+      {/* Owl Carousel Style - Image Stage */}
+      <div className="absolute inset-0 z-0 overflow-hidden">
+        {/* Owl Stage - Horizontal sliding container */}
+        <div 
+          className="flex h-full"
+          style={{
+            transform: `translate3d(${getTransformValue()}%, 0px, 0px)`,
+            transition: isTransitioning ? 'transform 0.6s ease-in-out' : 'none',
+          }}
+          onTransitionEnd={handleTransitionEnd}
+        >
+          {/* Owl Items - Slides including clones for infinite loop */}
+          {clonedImages.map((image, index) => (
+            <div
+              key={index}
+              className="relative flex-shrink-0 h-full w-full"
+            >
+              <img
+                src={image}
+                alt={`Professional cleaning services`}
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/30" />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Navigation Arrows */}
+      <button
+        onClick={prevSlide}
+        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 bg-background/20 hover:bg-background/40 backdrop-blur-sm text-background p-3 rounded-full transition-all duration-300 hover:scale-110"
+        aria-label="Previous slide"
+      >
+        <ChevronLeft className="w-6 h-6" />
+      </button>
+      <button
+        onClick={nextSlide}
+        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-background/20 hover:bg-background/40 backdrop-blur-sm text-background p-3 rounded-full transition-all duration-300 hover:scale-110"
+        aria-label="Next slide"
+      >
+        <ChevronRight className="w-6 h-6" />
+      </button>
+
+      {/* Slide Indicators */}
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+        {heroImages.map((_, index) => (
+          <button
+            key={index}
+            onClick={() => goToSlide(index)}
+            className={`h-2 rounded-full transition-all duration-300 ${
+              index === getActiveIndicator()
+                ? "w-8 bg-background"
+                : "w-2 bg-background/40 hover:bg-background/60"
+            }`}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
       </div>
 
       {/* Content */}

@@ -11,6 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { ArrowLeft, Plus, Edit, Trash2 } from 'lucide-react';
 import { ProtectedRoute } from '@/components/admin/ProtectedRoute';
 import { useToast } from '@/hooks/use-toast';
+import { AdminHeader } from '@/components/admin/AdminHeader';
 
 interface PricingEntry {
   id: string;

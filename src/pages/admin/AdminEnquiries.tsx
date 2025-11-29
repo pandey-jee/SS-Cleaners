@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, RefreshCw, Eye } from "lucide-react";
+import { Loader2, Search, RefreshCw, Eye, ArrowLeft } from "lucide-react";
 
 type EnquiryStatus = "new" | "replied" | "link_sent" | "booking_created" | "closed";
 
@@ -121,20 +121,28 @@ const AdminEnquiries = () => {
   };
 
   return (
-    <div className="container mx-auto p-6">
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-center">
-            <CardTitle className="text-2xl font-bold">Customer Enquiries</CardTitle>
-            <Button onClick={fetchEnquiries} variant="outline" size="sm">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
+    <div className="min-h-screen bg-muted/30">
+      <header className="bg-background border-b sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Link to="/admin/dashboard">
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="w-5 h-5" />
+              </Button>
+            </Link>
+            <h1 className="text-2xl font-bold">Customer Enquiries</h1>
           </div>
-        </CardHeader>
-        <CardContent>
-          {/* Filters */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6">
+          <Button onClick={fetchEnquiries} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
+      </header>
+      <main className="container mx-auto p-6">
+        <Card>
+          <CardContent className="pt-6">
+            {/* Filters */}
+            <div className="flex flex-col md:flex-row gap-4 mb-6">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -243,6 +251,7 @@ const AdminEnquiries = () => {
           )}
         </CardContent>
       </Card>
+      </main>
     </div>
   );
 };

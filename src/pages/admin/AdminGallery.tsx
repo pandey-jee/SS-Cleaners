@@ -12,6 +12,7 @@ import { ArrowLeft, Plus, Edit, Trash2, Upload } from 'lucide-react';
 import { ProtectedRoute } from '@/components/admin/ProtectedRoute';
 import { useToast } from '@/hooks/use-toast';
 import { compressAndResizeImage } from '@/lib/imageCompression';
+import { AdminHeader } from '@/components/admin/AdminHeader';
 
 interface GalleryImage {
   id: string;

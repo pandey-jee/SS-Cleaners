@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Phone, Mail, MapPin } from 'lucide-react';
 import { ProtectedRoute } from '@/components/admin/ProtectedRoute';
 import { useToast } from '@/hooks/use-toast';
+import { AdminHeader } from '@/components/admin/AdminHeader';
 
 interface Lead {
   id: string;
