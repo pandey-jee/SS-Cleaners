@@ -2,11 +2,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore: Deno types
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+// @ts-ignore: Deno types
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 // @ts-ignore: Deno global
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const GMAIL_USER = Deno.env.get("GMAIL_USER");
 // @ts-ignore: Deno global
-const APP_URL = Deno.env.get("APP_URL") || "http://localhost:5173";
+const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
+// @ts-ignore: Deno global
+const APP_URL = Deno.env.get("APP_URL") || "http://localhost:8080";
 
 interface BookingLinkRequest {
   enquiryId: string;
@@ -26,13 +30,35 @@ serve(async (req: Request) => {
   }
 
   try {
+    // Check required environment variables
+    if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
+      throw new Error("Gmail credentials not configured. Please set GMAIL_USER and GMAIL_APP_PASSWORD environment variables.");
+    }
+
     // @ts-ignore: Deno global
-    const supabaseClient = createClient(
-      // @ts-ignore: Deno global
-      Deno.env.get("SUPABASE_URL") ?? "",
-      // @ts-ignore: Deno global
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    // @ts-ignore: Deno global
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error("Supabase environment variables are not set");
+    }
+
+    // Initialize SMTP client
+    const client = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 465,
+        tls: true,
+        auth: {
+          username: GMAIL_USER,
+          password: GMAIL_APP_PASSWORD,
+        },
+      },
+    });
+
+    // @ts-ignore: Deno global
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
     const { enquiryId, token, customerEmail, customerName }: BookingLinkRequest = await req.json();
 
@@ -49,18 +75,12 @@ serve(async (req: Request) => {
 
     const bookingLink = `${APP_URL}/booking/complete?token=${token}`;
 
-    // Send email with booking link
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "SS PureCare <bookings@sspurecare.com>",
-        to: [customerEmail],
-        subject: "Complete Your Booking - Secure Link Inside",
-        html: `
+    // Send email with booking link using Nodemailer
+    await client.send({
+      from: `SS PureCare <${GMAIL_USER}>`,
+      to: customerEmail,
+      subject: "Complete Your Booking - Secure Link Inside",
+      html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
               <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Time to Complete Your Booking!</h1>
@@ -147,13 +167,9 @@ serve(async (req: Request) => {
             </div>
           </div>
         `,
-      }),
     });
 
-    if (!emailResponse.ok) {
-      const errorText = await emailResponse.text();
-      throw new Error(`Email sending failed: ${errorText}`);
-    }
+    await client.close();
 
     // Log email notification
     await supabaseClient.from("email_notifications").insert({
@@ -167,33 +183,40 @@ serve(async (req: Request) => {
     });
 
     // Send notification to admin
-    await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+    const adminClient = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 465,
+        tls: true,
+        auth: {
+          username: GMAIL_USER,
+          password: GMAIL_APP_PASSWORD,
+        },
       },
-      body: JSON.stringify({
-        from: "SS PureCare System <system@sspurecare.com>",
-        to: ["admin@sspurecare.com"],
-        subject: `Booking Link Sent to ${customerName}`,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #667eea;">📤 Booking Link Sent</h2>
-            <p>A booking link has been successfully sent to <strong>${customerName}</strong> (${customerEmail}).</p>
-            
-            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <p style="margin: 5px 0;"><strong>Enquiry ID:</strong> #${enquiry.id.slice(0, 8).toUpperCase()}</p>
-              <p style="margin: 5px 0;"><strong>Service:</strong> ${enquiry.service_required.replace(/-/g, " ")}</p>
-              <p style="margin: 5px 0;"><strong>Token:</strong> ${token.slice(0, 16)}...</p>
-              <p style="margin: 5px 0;"><strong>Expires:</strong> 7 days from now</p>
-            </div>
-
-            <p>You'll be notified when the customer completes their booking.</p>
-          </div>
-        `,
-      }),
     });
+
+    await adminClient.send({
+      from: `SS PureCare System <${GMAIL_USER}>`,
+      to: GMAIL_USER, // Send admin notification to the same Gmail account
+      subject: `Booking Link Sent to ${customerName}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h2 style="color: #667eea;">📤 Booking Link Sent</h2>
+          <p>A booking link has been successfully sent to <strong>${customerName}</strong> (${customerEmail}).</p>
+          
+          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 5px 0;"><strong>Enquiry ID:</strong> #${enquiry.id.slice(0, 8).toUpperCase()}</p>
+            <p style="margin: 5px 0;"><strong>Service:</strong> ${enquiry.service_required.replace(/-/g, " ")}</p>
+            <p style="margin: 5px 0;"><strong>Token:</strong> ${token.slice(0, 16)}...</p>
+            <p style="margin: 5px 0;"><strong>Expires:</strong> 7 days from now</p>
+          </div>
+
+          <p>You'll be notified when the customer completes their booking.</p>
+        </div>
+      `,
+    });
+
+    await adminClient.close();
 
     return new Response(
       JSON.stringify({
@@ -209,9 +232,24 @@ serve(async (req: Request) => {
     );
   } catch (error) {
     console.error("Error sending booking link:", error);
+    
+    // Detailed error logging
+    const errorDetails = {
+      message: error instanceof Error ? error.message : "Unknown error",
+      stack: error instanceof Error ? error.stack : undefined,
+      env_check: {
+        has_gmail_user: !!GMAIL_USER,
+        has_gmail_password: !!GMAIL_APP_PASSWORD,
+        has_app_url: !!APP_URL,
+      }
+    };
+    
+    console.error("Error details:", JSON.stringify(errorDetails, null, 2));
+    
     return new Response(
       JSON.stringify({
         error: error instanceof Error ? error.message : "Unknown error",
+        details: errorDetails,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

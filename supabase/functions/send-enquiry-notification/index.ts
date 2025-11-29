@@ -2,11 +2,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore: Deno types
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+// @ts-ignore: Deno types
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 // @ts-ignore: Deno global
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const GMAIL_USER = Deno.env.get("GMAIL_USER");
 // @ts-ignore: Deno global
-const APP_URL = Deno.env.get("APP_URL") || "http://localhost:5173";
+const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
+// @ts-ignore: Deno global
+const APP_URL = Deno.env.get("APP_URL") || "http://localhost:8080";
 
 interface EnquiryNotificationRequest {
   enquiryId: string;
@@ -48,18 +52,25 @@ serve(async (req: Request) => {
 
     let emailsSent = [];
 
-    // Send confirmation email to user
-    const userEmailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+    // Initialize SMTP client for user email
+    const userClient = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 465,
+        tls: true,
+        auth: {
+          username: GMAIL_USER,
+          password: GMAIL_APP_PASSWORD,
+        },
       },
-      body: JSON.stringify({
-        from: "SS PureCare <noreply@sspurecare.com>",
-        to: [enquiry.email],
-        subject: "We've Received Your Enquiry - SS PureCare",
-        html: `
+    });
+
+    // Send confirmation email to user
+    await userClient.send({
+      from: `SS PureCare <${GMAIL_USER}>`,
+      to: enquiry.email,
+      subject: "We've Received Your Enquiry - SS PureCare",
+      html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #2563eb;">Thank You for Your Enquiry!</h2>
             <p>Hi ${enquiry.name},</p>
@@ -92,39 +103,45 @@ serve(async (req: Request) => {
             </p>
           </div>
         `,
-      }),
     });
 
-    if (userEmailResponse.ok) {
-      emailsSent.push({
-        recipient: enquiry.email,
-        type: "user_confirmation",
-      });
+    await userClient.close();
 
-      // Log email notification
-      await supabaseClient.from("email_notifications").insert({
-        enquiry_id: enquiryId,
-        recipient_email: enquiry.email,
-        recipient_type: "user",
-        notification_type: "enquiry_received",
-        subject: "We've Received Your Enquiry - SS PureCare",
-        body: "Enquiry confirmation sent",
-        status: "sent",
-      });
-    }
+    emailsSent.push({
+      recipient: enquiry.email,
+      type: "user_confirmation",
+    });
+
+    // Log email notification
+    await supabaseClient.from("email_notifications").insert({
+      enquiry_id: enquiryId,
+      recipient_email: enquiry.email,
+      recipient_type: "user",
+      notification_type: "enquiry_received",
+      subject: "We've Received Your Enquiry - SS PureCare",
+      body: "Enquiry confirmation sent",
+      status: "sent",
+    });
+
+    // Initialize SMTP client for admin email
+    const adminClient = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 465,
+        tls: true,
+        auth: {
+          username: GMAIL_USER,
+          password: GMAIL_APP_PASSWORD,
+        },
+      },
+    });
 
     // Send notification email to admin
-    const adminEmailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "SS PureCare System <system@sspurecare.com>",
-        to: ["admin@sspurecare.com"], // Replace with actual admin email
-        subject: `New Enquiry Received - ${enquiry.service_required} in ${enquiry.city}`,
-        html: `
+    await adminClient.send({
+      from: `SS PureCare System <${GMAIL_USER}>`,
+      to: GMAIL_USER,
+      subject: `New Enquiry Received - ${enquiry.service_required} in ${enquiry.city}`,
+      html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #dc2626;">🔔 New Enquiry Alert</h2>
             <p>A new enquiry has been submitted and requires your attention.</p>
@@ -166,26 +183,25 @@ serve(async (req: Request) => {
             </p>
           </div>
         `,
-      }),
     });
 
-    if (adminEmailResponse.ok) {
-      emailsSent.push({
-        recipient: "admin@sspurecare.com",
-        type: "admin_notification",
-      });
+    await adminClient.close();
 
-      // Log admin notification
-      await supabaseClient.from("email_notifications").insert({
-        enquiry_id: enquiryId,
-        recipient_email: "admin@sspurecare.com",
-        recipient_type: "admin",
-        notification_type: "enquiry_received",
-        subject: `New Enquiry Received - ${enquiry.service_required} in ${enquiry.city}`,
-        body: "Admin notification sent",
-        status: "sent",
-      });
-    }
+    emailsSent.push({
+      recipient: GMAIL_USER,
+      type: "admin_notification",
+    });
+
+    // Log admin notification
+    await supabaseClient.from("email_notifications").insert({
+      enquiry_id: enquiryId,
+      recipient_email: GMAIL_USER,
+      recipient_type: "admin",
+      notification_type: "enquiry_received",
+      subject: `New Enquiry Received - ${enquiry.service_required} in ${enquiry.city}`,
+      body: "Admin notification sent",
+      status: "sent",
+    });
 
     return new Response(
       JSON.stringify({

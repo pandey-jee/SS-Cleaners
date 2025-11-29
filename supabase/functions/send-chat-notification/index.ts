@@ -2,11 +2,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore: Deno types
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+// @ts-ignore: Deno types
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 // @ts-ignore: Deno global
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const GMAIL_USER = Deno.env.get("GMAIL_USER");
 // @ts-ignore: Deno global
-const APP_URL = Deno.env.get("APP_URL") || "http://localhost:5173";
+const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
+// @ts-ignore: Deno global
+const APP_URL = Deno.env.get("APP_URL") || "http://localhost:8080";
 
 interface ChatNotificationRequest {
   conversationId: string;
@@ -62,18 +66,25 @@ serve(async (req: Request) => {
     const isAdminMessage = latestMessage.sender_type === "admin";
     const recipientName = isAdminMessage ? enquiry.name : "Admin";
 
-    // Send email notification
-    const emailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+    // Initialize SMTP client
+    const client = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 465,
+        tls: true,
+        auth: {
+          username: GMAIL_USER,
+          password: GMAIL_APP_PASSWORD,
+        },
       },
-      body: JSON.stringify({
-        from: "SS PureCare <notifications@sspurecare.com>",
-        to: [recipientEmail],
-        subject: `New Message from ${isAdminMessage ? "SS PureCare Team" : enquiry.name}`,
-        html: `
+    });
+
+    // Send email notification
+    await client.send({
+      from: `SS PureCare <${GMAIL_USER}>`,
+      to: recipientEmail,
+      subject: `New Message from ${isAdminMessage ? "SS PureCare Team" : enquiry.name}`,
+      html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
               <h1 style="color: white; margin: 0; font-size: 24px;">💬 New Message</h1>
@@ -149,13 +160,9 @@ serve(async (req: Request) => {
             </div>
           </div>
         `,
-      }),
     });
 
-    if (!emailResponse.ok) {
-      const errorText = await emailResponse.text();
-      throw new Error(`Email sending failed: ${errorText}`);
-    }
+    await client.close();
 
     // Log email notification
     await supabaseClient.from("email_notifications").insert({

@@ -2,11 +2,15 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 // @ts-ignore: Deno types
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+// @ts-ignore: Deno types
+import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
 
 // @ts-ignore: Deno global
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const GMAIL_USER = Deno.env.get("GMAIL_USER");
 // @ts-ignore: Deno global
-const APP_URL = Deno.env.get("APP_URL") || "http://localhost:5173";
+const GMAIL_APP_PASSWORD = Deno.env.get("GMAIL_APP_PASSWORD");
+// @ts-ignore: Deno global
+const APP_URL = Deno.env.get("APP_URL") || "http://localhost:8080";
 
 interface BookingConfirmationRequest {
   bookingId: string;
@@ -71,18 +75,25 @@ serve(async (req: Request) => {
       evening: "Evening (4 PM - 8 PM)",
     };
 
-    // Send confirmation email to customer
-    const customerEmailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
+    // Initialize SMTP client
+    const customerClient = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 465,
+        tls: true,
+        auth: {
+          username: GMAIL_USER,
+          password: GMAIL_APP_PASSWORD,
+        },
       },
-      body: JSON.stringify({
-        from: "SS PureCare <bookings@sspurecare.com>",
-        to: [enquiry.email],
-        subject: "Booking Confirmed - SS PureCare",
-        html: `
+    });
+
+    // Send confirmation email to customer
+    await customerClient.send({
+      from: `SS PureCare <${GMAIL_USER}>`,
+      to: enquiry.email,
+      subject: "Booking Confirmed - SS PureCare",
+      html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <div style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
               <h1 style="color: white; margin: 0; font-size: 32px;">✅ Booking Confirmed!</h1>
@@ -207,37 +218,41 @@ serve(async (req: Request) => {
             </div>
           </div>
         `,
-      }),
     });
 
-    if (!customerEmailResponse.ok) {
-      console.error("Customer email failed:", await customerEmailResponse.text());
-    } else {
-      // Log customer email
-      await supabaseClient.from("email_notifications").insert({
-        enquiry_id: enquiryId,
-        booking_id: bookingId,
-        recipient_email: enquiry.email,
-        recipient_type: "user",
-        notification_type: "booking_confirmed",
-        subject: "Booking Confirmed - SS PureCare",
-        body: "Booking confirmation sent",
-        status: "sent",
-      });
-    }
+    await customerClient.close();
+
+    // Log customer email
+    await supabaseClient.from("email_notifications").insert({
+      enquiry_id: enquiryId,
+      booking_id: bookingId,
+      recipient_email: enquiry.email,
+      recipient_type: "user",
+      notification_type: "booking_confirmed",
+      subject: "Booking Confirmed - SS PureCare",
+      body: "Booking confirmation sent",
+      status: "sent",
+    });
+
+    // Initialize admin SMTP client
+    const adminClient = new SMTPClient({
+      connection: {
+        hostname: "smtp.gmail.com",
+        port: 465,
+        tls: true,
+        auth: {
+          username: GMAIL_USER,
+          password: GMAIL_APP_PASSWORD,
+        },
+      },
+    });
 
     // Send notification to admin
-    const adminEmailResponse = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${RESEND_API_KEY}`,
-      },
-      body: JSON.stringify({
-        from: "SS PureCare System <system@sspurecare.com>",
-        to: ["admin@sspurecare.com"],
-        subject: `New Booking Created - ${enquiry.name}`,
-        html: `
+    await adminClient.send({
+      from: `SS PureCare System <${GMAIL_USER}>`,
+      to: GMAIL_USER,
+      subject: `New Booking Created - ${enquiry.name}`,
+      html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <h2 style="color: #10b981;">🎉 New Booking Created!</h2>
             <p>A customer has completed their booking and is ready for service.</p>
@@ -280,22 +295,21 @@ serve(async (req: Request) => {
             </p>
           </div>
         `,
-      }),
     });
 
-    if (adminEmailResponse.ok) {
-      // Log admin email
-      await supabaseClient.from("email_notifications").insert({
-        enquiry_id: enquiryId,
-        booking_id: bookingId,
-        recipient_email: "admin@sspurecare.com",
-        recipient_type: "admin",
-        notification_type: "booking_created",
-        subject: `New Booking Created - ${enquiry.name}`,
-        body: "Admin booking notification sent",
-        status: "sent",
-      });
-    }
+    await adminClient.close();
+
+    // Log admin email
+    await supabaseClient.from("email_notifications").insert({
+      enquiry_id: enquiryId,
+      booking_id: bookingId,
+      recipient_email: GMAIL_USER,
+      recipient_type: "admin",
+      notification_type: "booking_created",
+      subject: `New Booking Created - ${enquiry.name}`,
+      body: "Admin booking notification sent",
+      status: "sent",
+    });
 
     return new Response(
       JSON.stringify({

@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Edge Function - Send Booking Link</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #6b7280;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 14px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .response {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        .response.success {
+            background-color: #d1fae5;
+            border: 2px solid #10b981;
+            color: #065f46;
+        }
+        .response.error {
+            background-color: #fee2e2;
+            border: 2px solid #ef4444;
+            color: #991b1b;
+        }
+        .response h3 {
+            margin-top: 0;
+        }
+        pre {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+        }
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+        }
+        .info-box p {
+            margin: 5px 0;
+            color: #1e40af;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Edge Function Test</h1>
+        <p class="subtitle">Test the send-booking-link Edge Function</p>
+
+        <div class="info-box">
+            <p><strong>📝 Instructions:</strong></p>
+            <p>1. Create a test enquiry first (via Contact page)</p>
+            <p>2. Get the enquiry ID from Supabase or admin panel</p>
+            <p>3. Enter the details below and click "Test Edge Function"</p>
+        </div>
+
+        <form id="testForm">
+            <div class="form-group">
+                <label for="enquiryId">Enquiry ID *</label>
+                <input 
+                    type="text" 
+                    id="enquiryId" 
+                    placeholder="e.g., 123e4567-e89b-12d3-a456-426614174000"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="token">Token (auto-generated) *</label>
+                <input 
+                    type="text" 
+                    id="token" 
+                    placeholder="Will be auto-generated"
+                    readonly
+                    style="background-color: #f9fafb;"
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="customerEmail">Customer Email *</label>
+                <input 
+                    type="email" 
+                    id="customerEmail" 
+                    placeholder="customer@example.com"
+                    required
+                >
+            </div>
+
+            <div class="form-group">
+                <label for="customerName">Customer Name *</label>
+                <input 
+                    type="text" 
+                    id="customerName" 
+                    placeholder="John Doe"
+                    required
+                >
+            </div>
+
+            <button type="button" onclick="generateToken()">🔄 Generate New Token</button>
+            <button type="submit">🚀 Test Edge Function</button>
+        </form>
+
+        <div id="response" class="response"></div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://zvnkbxvvyqmxcygghdii.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2bmtieHZ2eXFteGN5Z2doZGlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzE5MTU5MTMsImV4cCI6MjA0NzQ5MTkxM30.DHjzrldKWA7F7o8CUYGxNsflTl_P9q6sEpMtzgf2ufc';
+
+        // Generate a random token
+        function generateToken() {
+            const token = 'test_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            document.getElementById('token').value = token;
+        }
+
+        // Auto-generate token on page load
+        window.onload = function() {
+            generateToken();
+        };
+
+        document.getElementById('testForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const responseDiv = document.getElementById('response');
+            const submitButton = e.target.querySelector('button[type="submit"]');
+            
+            // Disable button
+            submitButton.disabled = true;
+            submitButton.textContent = '⏳ Testing...';
+            
+            // Hide previous response
+            responseDiv.style.display = 'none';
+            
+            const enquiryId = document.getElementById('enquiryId').value;
+            const token = document.getElementById('token').value;
+            const customerEmail = document.getElementById('customerEmail').value;
+            const customerName = document.getElementById('customerName').value;
+
+            try {
+                const response = await fetch(`${SUPABASE_URL}/functions/v1/send-booking-link`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+                        'apikey': SUPABASE_ANON_KEY
+                    },
+                    body: JSON.stringify({
+                        enquiryId,
+                        token,
+                        customerEmail,
+                        customerName
+                    })
+                });
+
+                const data = await response.json();
+                
+                responseDiv.style.display = 'block';
+                
+                if (response.ok) {
+                    responseDiv.className = 'response success';
+                    responseDiv.innerHTML = `
+                        <h3>✅ Success!</h3>
+                        <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                        <p><strong>Message:</strong> ${data.message || 'Booking link sent successfully'}</p>
+                        <p><strong>Booking Link:</strong></p>
+                        <pre>http://localhost:8080/booking/complete?token=${token}</pre>
+                        <p style="margin-top: 15px;"><strong>Response Data:</strong></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <p style="margin-top: 15px; padding: 10px; background: #fef3c7; border-radius: 6px; color: #92400e;">
+                            📧 <strong>Check the email inbox for:</strong> ${customerEmail}
+                        </p>
+                    `;
+                } else {
+                    responseDiv.className = 'response error';
+                    responseDiv.innerHTML = `
+                        <h3>❌ Error</h3>
+                        <p><strong>Status:</strong> ${response.status} ${response.statusText}</p>
+                        <p><strong>Error Message:</strong> ${data.error || 'Unknown error'}</p>
+                        ${data.details ? `
+                            <p style="margin-top: 15px;"><strong>Details:</strong></p>
+                            <pre>${JSON.stringify(data.details, null, 2)}</pre>
+                        ` : ''}
+                        <p style="margin-top: 15px;"><strong>Full Response:</strong></p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <div style="margin-top: 20px; padding: 15px; background: #fef2f2; border-radius: 6px; border-left: 4px solid #ef4444;">
+                            <p style="margin: 0; color: #991b1b;"><strong>Common Issues:</strong></p>
+                            <ul style="margin: 10px 0 0 20px; color: #991b1b;">
+                                <li>RESEND_API_KEY not set in Supabase Edge Functions secrets</li>
+                                <li>Enquiry ID doesn't exist in database</li>
+                                <li>SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY not configured</li>
+                                <li>Email domain not verified in Resend</li>
+                            </ul>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                responseDiv.style.display = 'block';
+                responseDiv.className = 'response error';
+                responseDiv.innerHTML = `
+                    <h3>❌ Network Error</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Could not connect to the Edge Function. Make sure:</p>
+                    <ul>
+                        <li>The Edge Function is deployed</li>
+                        <li>Supabase project is running</li>
+                        <li>Network connection is stable</li>
+                    </ul>
+                `;
+            } finally {
+                // Re-enable button
+                submitButton.disabled = false;
+                submitButton.textContent = '🚀 Test Edge Function';
+            }
+        });
+    </script>
+</body>
+</html>
