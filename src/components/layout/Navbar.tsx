@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Menu, X, Phone, User, LogOut, Settings } from "lucide-react";
+import { Menu, X, Phone, User, LogOut, Settings, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { ADMIN_EMAIL } from "@/lib/constants";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -130,6 +131,15 @@ const Navbar = () => {
                     <Settings className="mr-2 h-4 w-4" />
                     <span>My Services</span>
                   </DropdownMenuItem>
+                  {user.email === ADMIN_EMAIL && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => navigate("/admin/dashboard")}>
+                        <LayoutDashboard className="mr-2 h-4 w-4" />
+                        <span>Admin Portal</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout}>
                     <LogOut className="mr-2 h-4 w-4" />
@@ -205,6 +215,19 @@ const Navbar = () => {
                     <Settings className="mr-2 h-4 w-4" />
                     My Services
                   </Button>
+                  {user.email === ADMIN_EMAIL && (
+                    <Button
+                      variant="outline"
+                      className="w-full mb-2"
+                      onClick={() => {
+                        navigate("/admin/dashboard");
+                        setIsOpen(false);
+                      }}
+                    >
+                      <LayoutDashboard className="mr-2 h-4 w-4" />
+                      Admin Portal
+                    </Button>
+                  )}
                   <Button
                     variant="destructive"
                     className="w-full"

@@ -33,6 +33,7 @@ import MockCheckout from "./pages/payment/MockCheckout";
 import PaymentSuccess from "./pages/payment/Success";
 import PaymentCancel from "./pages/payment/Cancel";
 import CompleteBooking from "./pages/booking/CompleteBooking";
+import AuthCallback from "./pages/AuthCallback";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +52,7 @@ const App = () => (
             <Route path="/contact" element={<Contact />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/profile" element={

@@ -8,7 +8,9 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Mail, Lock, Chrome } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { ADMIN_EMAIL } from "@/lib/constants";
 
+// Admin email constant
 const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -51,8 +53,17 @@ const Login = () => {
         description: "Welcome back!",
       });
 
-      // Redirect to home or previous page
-      navigate("/");
+      // Check if user is admin and redirect to admin dashboard
+      if (data.user.email === ADMIN_EMAIL) {
+        toast({
+          title: "Admin Login Successful",
+          description: "Redirecting to admin dashboard...",
+        });
+        navigate("/admin/dashboard");
+      } else {
+        // Redirect to home for regular users
+        navigate("/");
+      }
     } catch (error: any) {
       setError("An unexpected error occurred. Please try again.");
       console.error("Login error:", error);
@@ -69,7 +80,7 @@ const Login = () => {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}/auth/callback`,
           queryParams: {
             access_type: "offline",
             prompt: "consent",

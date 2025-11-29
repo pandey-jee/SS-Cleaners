@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { LayoutDashboard, Package, Users, DollarSign, MessageSquare, LogOut, Images, ClipboardList, CheckSquare } from 'lucide-react';
+import { LayoutDashboard, Package, Users, DollarSign, MessageSquare, LogOut, Images, ClipboardList, CheckSquare, ExternalLink } from 'lucide-react';
 import { ProtectedRoute } from '@/components/admin/ProtectedRoute';
 
 function DashboardContent() {
@@ -71,6 +71,10 @@ function DashboardContent() {
           </div>
           <div className="flex items-center gap-4">
             <span className="text-sm text-muted-foreground">{user?.email}</span>
+            <Button variant="outline" onClick={() => window.open('/', '_blank')}>
+              <ExternalLink className="w-4 h-4 mr-2" />
+              View Website
+            </Button>
             <Button variant="outline" onClick={handleSignOut}>
               <LogOut className="w-4 h-4 mr-2" />
               Sign Out

@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { ArrowLeft, Plus, Edit, Trash2, Upload } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, Upload, ExternalLink } from 'lucide-react';
 import { ProtectedRoute } from '@/components/admin/ProtectedRoute';
 import { useToast } from '@/hooks/use-toast';
 import { compressAndResizeImage } from '@/lib/imageCompression';
@@ -301,6 +301,10 @@ function AdminGalleryContent() {
             <h1 className="text-2xl font-bold">Manage Gallery</h1>
           </div>
           <div className="flex gap-2">
+            <Button onClick={() => window.open('/', '_blank')} variant="outline" size="sm">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View Website
+            </Button>
             <div className="relative">
               <Input
                 id="bulk-upload"

@@ -213,14 +213,19 @@ function AdminServicesContent() {
             </Link>
             <h1 className="text-2xl font-bold">Manage Services</h1>
           </div>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => openDialog()}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Service
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center gap-2">
+            <Button onClick={() => window.open('/', '_blank')} variant="outline" size="sm">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View Website
+            </Button>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button onClick={() => openDialog()}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Service
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>
                   {editingService ? 'Edit Service' : 'Add New Service'}
@@ -331,7 +336,8 @@ function AdminServicesContent() {
                 </div>
               </form>
             </DialogContent>
-          </Dialog>
+            </Dialog>
+          </div>
         </div>
       </header>
       <main className="container mx-auto p-6">

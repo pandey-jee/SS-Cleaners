@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Search, RefreshCw, Eye, ArrowLeft } from "lucide-react";
+import { Loader2, Search, RefreshCw, Eye, ArrowLeft, ExternalLink } from "lucide-react";
 
 type EnquiryStatus = "new" | "replied" | "link_sent" | "booking_created" | "closed";
 
@@ -132,10 +132,16 @@ const AdminEnquiries = () => {
             </Link>
             <h1 className="text-2xl font-bold">Customer Enquiries</h1>
           </div>
-          <Button onClick={fetchEnquiries} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Refresh
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => window.open('/', '_blank')} variant="outline" size="sm">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View Website
+            </Button>
+            <Button onClick={fetchEnquiries} variant="outline" size="sm">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
         </div>
       </header>
       <main className="container mx-auto p-6">
