@@ -284,20 +284,40 @@ const AdminEnquiryDetail = () => {
     setSendingLink(true);
     try {
       // Generate token
-      const token = await supabase.rpc("generate_booking_token");
+      const { data: token, error: rpcError } = await supabase.rpc("generate_booking_token");
+      
+      if (rpcError) {
+        console.error("Token generation error:", rpcError);
+        throw new Error("Failed to generate booking token");
+      }
+
+      if (!token) {
+        throw new Error("No token returned from generation");
+      }
+
+      console.log("Generated token:", token);
       
       // Insert token record
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
 
-      const { error: tokenError } = await supabase.from("enquiry_tokens" as any).insert({
-        enquiry_id: id,
-        token: token,
-        expires_at: expiresAt.toISOString(),
-        used: false,
-      } as any);
+      const { data: insertedToken, error: tokenError } = await supabase
+        .from("enquiry_tokens" as any)
+        .insert({
+          enquiry_id: id,
+          token: token,
+          expires_at: expiresAt.toISOString(),
+          used: false,
+        } as any)
+        .select()
+        .single();
 
-      if (tokenError) throw tokenError;
+      if (tokenError) {
+        console.error("Token insert error:", tokenError);
+        throw tokenError;
+      }
+
+      console.log("Token inserted successfully:", insertedToken);
 
       // Send booking link via message if checkbox is checked
       if (replyWithLink && conversation) {

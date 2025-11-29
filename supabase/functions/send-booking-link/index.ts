@@ -182,41 +182,46 @@ serve(async (req: Request) => {
       status: "sent",
     });
 
-    // Send notification to admin
-    const adminClient = new SMTPClient({
-      connection: {
-        hostname: "smtp.gmail.com",
-        port: 465,
-        tls: true,
-        auth: {
-          username: GMAIL_USER,
-          password: GMAIL_APP_PASSWORD,
+    // Send notification to admin (non-blocking - don't fail if this fails)
+    try {
+      const adminClient = new SMTPClient({
+        connection: {
+          hostname: "smtp.gmail.com",
+          port: 465,
+          tls: true,
+          auth: {
+            username: GMAIL_USER,
+            password: GMAIL_APP_PASSWORD,
+          },
         },
-      },
-    });
+      });
 
-    await adminClient.send({
-      from: `SS PureCare System <${GMAIL_USER}>`,
-      to: GMAIL_USER, // Send admin notification to the same Gmail account
-      subject: `Booking Link Sent to ${customerName}`,
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #667eea;">📤 Booking Link Sent</h2>
-          <p>A booking link has been successfully sent to <strong>${customerName}</strong> (${customerEmail}).</p>
-          
-          <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 5px 0;"><strong>Enquiry ID:</strong> #${enquiry.id.slice(0, 8).toUpperCase()}</p>
-            <p style="margin: 5px 0;"><strong>Service:</strong> ${enquiry.service_required.replace(/-/g, " ")}</p>
-            <p style="margin: 5px 0;"><strong>Token:</strong> ${token.slice(0, 16)}...</p>
-            <p style="margin: 5px 0;"><strong>Expires:</strong> 7 days from now</p>
+      await adminClient.send({
+        from: `SS PureCare System <${GMAIL_USER}>`,
+        to: GMAIL_USER,
+        subject: `Booking Link Sent to ${customerName}`,
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #667eea;">📤 Booking Link Sent</h2>
+            <p>A booking link has been successfully sent to <strong>${customerName}</strong> (${customerEmail}).</p>
+            
+            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+              <p style="margin: 5px 0;"><strong>Enquiry ID:</strong> #${enquiry.id.slice(0, 8).toUpperCase()}</p>
+              <p style="margin: 5px 0;"><strong>Service:</strong> ${enquiry.service_required.replace(/-/g, " ")}</p>
+              <p style="margin: 5px 0;"><strong>Token:</strong> ${token.slice(0, 16)}...</p>
+              <p style="margin: 5px 0;"><strong>Expires:</strong> 7 days from now</p>
+            </div>
+
+            <p>You'll be notified when the customer completes their booking.</p>
           </div>
+        `,
+      });
 
-          <p>You'll be notified when the customer completes their booking.</p>
-        </div>
-      `,
-    });
-
-    await adminClient.close();
+      await adminClient.close();
+    } catch (adminError) {
+      console.error("Admin notification failed (non-critical):", adminError);
+      // Don't throw - main email already sent successfully
+    }
 
     return new Response(
       JSON.stringify({

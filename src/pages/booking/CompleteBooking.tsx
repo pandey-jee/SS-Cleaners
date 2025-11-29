@@ -116,6 +116,8 @@ const CompleteBooking = () => {
 
   const validateToken = async () => {
     try {
+      console.log("Validating token:", token);
+
       // Fetch token details
       const { data: tokenData, error: tokenError } = await supabase
         .from("enquiry_tokens")
@@ -123,7 +125,10 @@ const CompleteBooking = () => {
         .eq("token", token)
         .single();
 
+      console.log("Token query result:", { tokenData, tokenError });
+
       if (tokenError || !tokenData) {
+        console.error("Token not found:", tokenError);
         setTokenError("Invalid booking token");
         setValidating(false);
         return;
@@ -267,32 +272,46 @@ const CompleteBooking = () => {
       // Get authenticated user
       const { data: { user } } = await supabase.auth.getUser();
 
+      const bookingData = {
+        enquiry_id: enquiry.id,
+        user_id: user?.id || null,
+        name: enquiry.name,
+        email: enquiry.email,
+        phone: enquiry.phone,
+        city: enquiry.city,
+        service_type: enquiry.service_required,
+        property_type: validatedData.property_type,
+        property_size: validatedData.property_size_sqft.toString(),
+        bedrooms: validatedData.number_of_rooms,
+        bathrooms: validatedData.number_of_bathrooms,
+        preferred_date: validatedData.preferred_date,
+        time_slot: validatedData.preferred_time_slot,
+        address_line1: validatedData.address_line1,
+        address_line2: validatedData.address_line2 || null,
+        landmark: validatedData.landmark || null,
+        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        add_ons: selectedAddOns,
+        special_instructions: validatedData.special_instructions || null,
+        estimated_price: estimatedPrice,
+        status: "pending",
+      };
+
+      console.log("Creating booking with data:", bookingData);
+
       // Create booking with user_id if authenticated
       const { data: booking, error: bookingError } = await supabase
         .from("bookings")
-        .insert({
-          enquiry_id: enquiry.id,
-          user_id: user?.id || null, // Link to authenticated user
-          property_type: validatedData.property_type,
-          property_size_sqft: validatedData.property_size_sqft,
-          number_of_rooms: validatedData.number_of_rooms,
-          number_of_bathrooms: validatedData.number_of_bathrooms,
-          preferred_date: validatedData.preferred_date,
-          preferred_time_slot: validatedData.preferred_time_slot,
-          address_line1: validatedData.address_line1,
-          address_line2: validatedData.address_line2 || null,
-          landmark: validatedData.landmark || null,
-          latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-          longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-          add_ons: selectedAddOns,
-          special_instructions: validatedData.special_instructions || null,
-          estimated_price: estimatedPrice,
-          booking_status: "pending",
-        })
+        .insert(bookingData)
         .select()
         .single();
 
-      if (bookingError) throw bookingError;
+      console.log("Booking result:", { booking, bookingError });
+
+      if (bookingError) {
+        console.error("Booking insert error details:", bookingError);
+        throw bookingError;
+      }
 
       // Mark token as used
       const { error: tokenUpdateError } = await supabase
@@ -331,6 +350,8 @@ const CompleteBooking = () => {
       });
     } catch (error: any) {
       console.error("Booking error:", error);
+      console.error("Error details:", JSON.stringify(error, null, 2));
+      
       if (error instanceof z.ZodError) {
         const errorMessages = error.errors.map((err) => err.message).join(", ");
         toast({
@@ -339,9 +360,15 @@ const CompleteBooking = () => {
           variant: "destructive",
         });
       } else {
+        // Extract detailed error message
+        const errorMessage = error.message || 
+                           error.hint || 
+                           error.details || 
+                           "Something went wrong. Please try again.";
+        
         toast({
           title: "Booking Failed",
-          description: error.message || "Something went wrong. Please try again.",
+          description: errorMessage,
           variant: "destructive",
         });
       }
@@ -679,7 +706,7 @@ const CompleteBooking = () => {
                       {addOn.label}
                     </Label>
                   </div>
-                  <span className="font-semibold text-sm">+${addOn.price}</span>
+                  <span className="font-semibold text-sm">+₹{addOn.price}</span>
                 </div>
               ))}
             </CardContent>
@@ -717,7 +744,7 @@ const CompleteBooking = () => {
                 </div>
                 <div className="text-right">
                   <p className="text-3xl font-bold text-primary">
-                    ${calculateEstimatedPrice()}
+                    ₹{calculateEstimatedPrice()}
                   </p>
                 </div>
               </div>

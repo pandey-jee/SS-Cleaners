@@ -152,7 +152,7 @@ serve(async (req: Request) => {
               <div style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); padding: 20px; border-radius: 8px; margin: 25px 0;">
                 <h3 style="margin-top: 0; color: #1e40af; font-size: 20px;">💰 Estimated Price:</h3>
                 <p style="font-size: 32px; font-weight: bold; color: #1e40af; margin: 10px 0;">
-                  $${booking.estimated_price}
+                  ₹${booking.estimated_price}
                 </p>
                 <p style="font-size: 12px; color: #6b7280; margin: 0;">
                   *Final price may vary based on actual requirements
@@ -268,7 +268,7 @@ serve(async (req: Request) => {
               <p style="margin: 5px 0;"><strong>Date:</strong> ${formatDate(booking.preferred_date)}</p>
               <p style="margin: 5px 0;"><strong>Time:</strong> ${timeSlotLabels[booking.preferred_time_slot]}</p>
               <p style="margin: 5px 0;"><strong>Address:</strong> ${booking.address_line1}, ${enquiry.city}</p>
-              <p style="margin: 15px 0 5px 0; font-size: 20px; color: #10b981;"><strong>Estimated Price: $${booking.estimated_price}</strong></p>
+              <p style="margin: 15px 0 5px 0; font-size: 20px; color: #10b981;"><strong>Estimated Price: ₹${booking.estimated_price}</strong></p>
             </div>
 
             ${booking.special_instructions ? `
