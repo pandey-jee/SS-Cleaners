@@ -166,18 +166,21 @@ const MyBookings = () => {
             </Card>
           ) : (
             <Tabs defaultValue="enquiries" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-8">
-                <TabsTrigger value="enquiries" className="flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4" />
-                  Enquiries ({pendingEnquiries.length})
+              <TabsList className="grid w-full grid-cols-3 mb-8 h-auto">
+                <TabsTrigger value="enquiries" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 text-xs sm:text-sm">
+                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Enquiries</span>
+                  <span className="text-xs">({pendingEnquiries.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="active" className="flex items-center gap-2">
-                  <Clock className="h-4 w-4" />
-                  Active Bookings ({activeBookings.length})
+                <TabsTrigger value="active" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 text-xs sm:text-sm">
+                  <Clock className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Active</span>
+                  <span className="text-xs">({activeBookings.length})</span>
                 </TabsTrigger>
-                <TabsTrigger value="completed" className="flex items-center gap-2">
-                  <CheckCircle className="h-4 w-4" />
-                  Completed ({completedBookings.length})
+                <TabsTrigger value="completed" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 text-xs sm:text-sm">
+                  <CheckCircle className="h-4 w-4 flex-shrink-0" />
+                  <span className="truncate">Done</span>
+                  <span className="text-xs">({completedBookings.length})</span>
                 </TabsTrigger>
               </TabsList>
 
