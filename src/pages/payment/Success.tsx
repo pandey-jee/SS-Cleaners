@@ -24,7 +24,7 @@ const PaymentSuccess = () => {
     try {
       const { data, error } = await supabase
         .from('bookings')
-        .select('*, services(name)')
+        .select('*')
         .eq('id', bookingId)
         .single();
 
@@ -59,7 +59,7 @@ const PaymentSuccess = () => {
                 <div className="space-y-1 text-sm">
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Service:</span>
-                    <span className="font-medium">{bookingDetails.services?.name}</span>
+                    <span className="font-medium">{bookingDetails.service_type}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Booking ID:</span>

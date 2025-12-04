@@ -12,6 +12,7 @@ import { ArrowLeft, Plus, Edit, Trash2, Upload, ExternalLink } from 'lucide-reac
 import { ProtectedRoute } from '@/components/admin/ProtectedRoute';
 import { useToast } from '@/hooks/use-toast';
 import { compressAndResizeImage } from '@/lib/imageCompression';
+import { sanitizeFilename } from '@/lib/sanitize';
 import { AdminHeader } from '@/components/admin/AdminHeader';
 
 interface GalleryImage {
@@ -64,6 +65,28 @@ function AdminGalleryContent() {
     const file = e.target.files?.[0];
     if (!file) return;
 
+    // Security: Validate file type
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        title: 'Invalid File Type',
+        description: 'Only JPEG, PNG, and WebP images are allowed',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // Security: Validate file size (max 10MB)
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    if (file.size > maxSize) {
+      toast({
+        title: 'File Too Large',
+        description: 'Maximum file size is 10MB',
+        variant: 'destructive'
+      });
+      return;
+    }
+
     setUploadingImage(true);
     try {
       // Compress and resize image
@@ -73,8 +96,10 @@ function AdminGalleryContent() {
         quality: 0.85
       });
 
-      const fileExt = file.name.split('.').pop();
-      const fileName = `${Math.random()}.${fileExt}`;
+      // Security: Sanitize filename
+      const fileExt = file.name.split('.').pop()?.toLowerCase() || 'jpg';
+      const sanitizedName = sanitizeFilename(file.name.split('.')[0]);
+      const fileName = `${sanitizedName}_${Date.now()}.${fileExt}`;
       const filePath = `${fileName}`;
 
       const { error: uploadError } = await supabase.storage

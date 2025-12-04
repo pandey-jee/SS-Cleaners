@@ -14,6 +14,8 @@ import { Phone, Mail, MapPin, Clock, Loader2, CheckCircle2, MessageCircle, LogIn
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { sanitizeInput, sanitizeEmail, sanitizePhone } from "@/lib/sanitize";
+import { checkRateLimit, recordAttempt, resetRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 import { z } from "zod";
 
 const Contact = () => {
@@ -51,11 +53,37 @@ const Contact = () => {
       return;
     }
     
+    // Rate limiting check
+    const rateLimitKey = `contact-form-${user.id}`;
+    const rateCheck = checkRateLimit(rateLimitKey, RATE_LIMITS.CONTACT_FORM);
+    
+    if (rateCheck.isBlocked) {
+      toast({
+        title: "Too Many Submissions",
+        description: `Please wait ${rateCheck.remainingTime} seconds before submitting another enquiry.`,
+        variant: "destructive"
+      });
+      return;
+    }
+    
     setLoading(true);
     
     try {
-      // Validate form data
-      const validatedData = contactSchema.parse(formData);
+      // Record attempt
+      recordAttempt(rateLimitKey);
+      
+      // Sanitize all inputs before validation
+      const sanitizedData = {
+        name: sanitizeInput(formData.name),
+        email: sanitizeEmail(formData.email),
+        phone: sanitizePhone(formData.phone),
+        city: sanitizeInput(formData.city),
+        service_required: formData.service_required, // Already from dropdown
+        message: sanitizeInput(formData.message)
+      };
+      
+      // Validate sanitized data
+      const validatedData = contactSchema.parse(sanitizedData);
       
       // Insert enquiry into database with user_id if authenticated
       const { data: enquiry, error: enquiryError } = await supabase
@@ -93,6 +121,10 @@ const Contact = () => {
 
       // Show success state
       setSubmitted(true);
+      
+      // Reset rate limit on successful submission
+      resetRateLimit(rateLimitKey);
+      
       toast({
         title: "Enquiry Submitted!",
         description: "We'll review your request and send you a detailed booking link within 24 hours.",

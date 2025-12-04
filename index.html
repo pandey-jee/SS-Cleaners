@@ -3,6 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    
+    <!-- Content Security Policy -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com https://*.supabase.co;
+      style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+      font-src 'self' https://fonts.gstatic.com data:;
+      img-src 'self' data: https: blob:;
+      connect-src 'self' https://*.supabase.co wss://*.supabase.co https://checkout.razorpay.com https://api.razorpay.com https://lumberjack.razorpay.com;
+      frame-src 'self' https://checkout.razorpay.com https://api.razorpay.com;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      upgrade-insecure-requests;
+    " />
+    
     <title>SS Cleaner - Professional Cleaning & Facility Management Services</title>
     <meta name="description" content="ISO certified professional cleaning services for homes and offices. Deep cleaning, housekeeping, pest control, and facility management in Rhega, Lucknow, Ayodhya, and Kanpur." />
     <meta name="author" content="SS Cleaner" />

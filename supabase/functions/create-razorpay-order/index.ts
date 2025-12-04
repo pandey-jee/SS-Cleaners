@@ -20,6 +20,40 @@ serve(async (req) => {
       throw new Error("Amount and bookingId are required");
     }
 
+    // Validate amount is a positive number
+    const numAmount = parseFloat(amount);
+    if (isNaN(numAmount) || numAmount <= 0 || numAmount > 10000000) {
+      throw new Error("Invalid amount");
+    }
+
+    // Initialize Supabase client
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    // Verify booking exists and get actual amount from database
+    const { data: booking, error: bookingError } = await supabaseClient
+      .from("bookings")
+      .select("id, total_amount, payment_status")
+      .eq("id", bookingId)
+      .single();
+
+    if (bookingError || !booking) {
+      throw new Error("Booking not found");
+    }
+
+    // Security: Verify amount matches booking total_amount (with 1 INR tolerance for rounding)
+    if (Math.abs(numAmount - booking.total_amount) > 1) {
+      console.error(`Amount mismatch: Requested ${numAmount}, Expected ${booking.total_amount}`);
+      throw new Error("Amount verification failed");
+    }
+
+    // Prevent duplicate payments
+    if (booking.payment_status === "paid") {
+      throw new Error("Booking already paid");
+    }
+
     // Get Razorpay credentials from environment
     const razorpayKeyId = Deno.env.get("RAZORPAY_KEY_ID");
     const razorpayKeySecret = Deno.env.get("RAZORPAY_KEY_SECRET");
@@ -28,9 +62,9 @@ serve(async (req) => {
       throw new Error("Razorpay credentials not configured");
     }
 
-    // Create Razorpay order
+    // Use verified amount from database
     const orderData = {
-      amount: Math.round(amount * 100), // Convert to paise (smallest currency unit)
+      amount: Math.round(booking.total_amount * 100), // Convert to paise (smallest currency unit)
       currency: currency,
       receipt: bookingId.slice(0, 40), // Razorpay has 40 char limit for receipt
       notes: {
@@ -57,19 +91,13 @@ serve(async (req) => {
 
     const order = await razorpayResponse.json();
 
-    // Initialize Supabase client
-    const supabaseClient = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
-    );
-
-    // Store order details in database
+    // Store order details in database with verified amount
     const { error: dbError } = await supabaseClient
       .from("payment_orders")
       .insert({
         booking_id: bookingId,
         razorpay_order_id: order.id,
-        amount: amount,
+        amount: booking.total_amount, // Use verified amount from booking
         currency: currency,
         status: "created",
       });

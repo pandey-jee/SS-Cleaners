@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useRealtimeChat } from "@/hooks/useRealtimeChat";
 import { cn } from "@/lib/utils";
+import { sanitizeInput } from "@/lib/sanitize";
 import { toast } from "sonner";
 
 interface Message {
@@ -118,7 +119,9 @@ const UserRealtimeChat = ({ enquiryId, userEmail, userName }: UserRealtimeChatPr
   const sendMessage = async () => {
     if (!input.trim() || isSending || !conversationId) return;
 
-    const messageText = input.trim();
+    const messageText = sanitizeInput(input.trim());
+    if (!messageText) return;
+    
     setInput("");
     setIsSending(true);
 

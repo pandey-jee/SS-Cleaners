@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare, Send, X, Loader2, Minimize2 } from "lucide-react";
+import { sanitizeInput } from "@/lib/sanitize";
 import { useToast } from "@/hooks/use-toast";
 
 interface Message {
@@ -164,7 +165,9 @@ const CustomerChat = ({ enquiryId, bookingId, isOpen = false, onClose }: Custome
     e.preventDefault();
     if (!newMessage.trim() || !conversationId) return;
 
-    const messageText = newMessage.trim();
+    const messageText = sanitizeInput(newMessage.trim());
+    if (!messageText) return;
+    
     setNewMessage(""); // Clear input immediately for better UX
     setLoading(true);
     

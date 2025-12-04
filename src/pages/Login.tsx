@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Mail, Lock, Chrome } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { checkRateLimit, recordAttempt, resetRateLimit, RATE_LIMITS } from "@/lib/rateLimit";
 import { ADMIN_EMAIL } from "@/lib/constants";
 
 // Admin email constant
@@ -23,6 +24,16 @@ const Login = () => {
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    
+    // Rate limiting check
+    const rateLimitKey = `login-${email.trim().toLowerCase()}`;
+    const rateCheck = checkRateLimit(rateLimitKey, RATE_LIMITS.LOGIN);
+    
+    if (rateCheck.isBlocked) {
+      setError(`Too many login attempts. Please wait ${Math.ceil(rateCheck.remainingTime! / 60)} minutes before trying again.`);
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -32,10 +43,14 @@ const Login = () => {
       });
 
       if (error) {
+        // Record failed attempt
+        recordAttempt(rateLimitKey);
+        
         if (error.message.includes("Email not confirmed")) {
           setError("Please verify your email address before logging in. Check your inbox for the verification link.");
         } else if (error.message.includes("Invalid login credentials")) {
-          setError("Invalid email or password. Please try again.");
+          const attemptsRemaining = rateCheck.attemptsLeft ? rateCheck.attemptsLeft - 1 : 0;
+          setError(`Invalid email or password. ${attemptsRemaining} attempts remaining.`);
         } else {
           setError(error.message);
         }
@@ -47,6 +62,9 @@ const Login = () => {
         await supabase.auth.signOut();
         return;
       }
+
+      // Reset rate limit on successful login
+      resetRateLimit(rateLimitKey);
 
       toast({
         title: "Login Successful",

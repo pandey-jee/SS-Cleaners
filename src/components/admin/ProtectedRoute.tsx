@@ -12,8 +12,10 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loading) {
       if (!user) {
+        console.warn('[Security] Unauthorized access attempt to admin route - No user');
         navigate('/login', { replace: true });
       } else if (!isAdmin) {
+        console.warn(`[Security] Unauthorized access attempt by user: ${user.email}`);
         navigate('/', { replace: true });
       }
     }
