@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import UserRealtimeChat from "@/components/chat/UserRealtimeChat";
@@ -8,15 +9,20 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Phone, Mail, MapPin, Clock, Loader2, CheckCircle2, MessageCircle } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Phone, Mail, MapPin, Clock, Loader2, CheckCircle2, MessageCircle, LogIn, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
 const Contact = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [showLoginAlert, setShowLoginAlert] = useState(false);
   const [enquiryId, setEnquiryId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -38,12 +44,16 @@ const Contact = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Check if user is authenticated
+    if (!user) {
+      setShowLoginAlert(true);
+      return;
+    }
+    
     setLoading(true);
     
     try {
-      // Get authenticated user
-      const { data: { user } } = await supabase.auth.getUser();
-      
       // Validate form data
       const validatedData = contactSchema.parse(formData);
       
@@ -51,7 +61,7 @@ const Contact = () => {
       const { data: enquiry, error: enquiryError } = await supabase
         .from('enquiries')
         .insert({
-          user_id: user?.id || null, // Link to authenticated user
+          user_id: user.id, // Authenticated user ID
           name: validatedData.name,
           email: validatedData.email,
           phone: validatedData.phone,
@@ -372,6 +382,36 @@ const Contact = () => {
         </section>
       </main>
       <Footer />
+      
+      {/* Login Required Alert Dialog */}
+      <AlertDialog open={showLoginAlert} onOpenChange={setShowLoginAlert}>
+        <AlertDialogContent className="max-w-md">
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 mb-2">
+              <div className="p-3 bg-destructive/10 rounded-full">
+                <AlertCircle className="h-6 w-6 text-destructive" />
+              </div>
+              <AlertDialogTitle className="text-2xl">Login Required</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription className="text-base">
+              You need to be logged in to submit an enquiry. Please login or create an account to continue.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel onClick={() => setShowLoginAlert(false)}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => navigate("/login", { state: { from: "/contact" } })}
+              className="gap-2"
+            >
+              <LogIn className="h-4 w-4" />
+              Go to Login
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
       {/* Show real-time chat after enquiry submission */}
       {enquiryId && (
         <UserRealtimeChat 

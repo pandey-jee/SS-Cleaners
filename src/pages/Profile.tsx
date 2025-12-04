@@ -102,8 +102,8 @@ const Profile = () => {
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
-      <main className="flex-grow bg-gradient-to-br from-blue-50 via-white to-purple-50 py-6 sm:py-12 px-4 sm:px-6">
-        <div className="container mx-auto max-w-4xl w-full">
+      <main className="flex-grow bg-gradient-to-br from-blue-50 via-white to-purple-50 py-12 px-4">
+        <div className="container mx-auto max-w-4xl">
           <div className="mb-8">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
               My Profile
@@ -114,7 +114,7 @@ const Profile = () => {
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle className="flex flex-col sm:flex-row items-start sm:items-center gap-3 justify-between">
+                <CardTitle className="flex items-center gap-2 justify-between">
                   <div className="flex items-center gap-2">
                     <User className="h-5 w-5" />
                     Account Information
@@ -124,40 +124,32 @@ const Profile = () => {
                       variant="outline"
                       size="sm"
                       onClick={() => setIsEditing(true)}
-                      className="w-full sm:w-auto"
                     >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
                     </Button>
                   ) : (
-                    <div className="flex gap-2 w-full sm:w-auto">
+                    <div className="flex gap-2">
                       <Button
                         variant="outline"
                         size="sm"
                         onClick={handleCancel}
                         disabled={saving}
-                        className="flex-1 sm:flex-none"
                       >
-                        <X className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Cancel</span>
+                        <X className="h-4 w-4 mr-2" />
+                        Cancel
                       </Button>
                       <Button
                         size="sm"
                         onClick={handleSaveProfile}
                         disabled={saving}
-                        className="flex-1 sm:flex-none"
                       >
                         {saving ? (
-                          <>
-                            <Loader2 className="h-4 w-4 sm:mr-2 animate-spin" />
-                            <span className="hidden sm:inline">Saving...</span>
-                          </>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         ) : (
-                          <>
-                            <Save className="h-4 w-4 sm:mr-2" />
-                            <span className="hidden sm:inline">Save</span>
-                          </>
+                          <Save className="h-4 w-4 mr-2" />
                         )}
+                        Save
                       </Button>
                     </div>
                   )}
@@ -284,7 +276,7 @@ const Profile = () => {
                 Quick Actions
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col sm:flex-row gap-3">
+            <CardContent className="space-y-3">
               <Button 
                 className="w-full" 
                 onClick={() => navigate("/bookings")}

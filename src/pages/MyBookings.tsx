@@ -5,6 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Loader2, Calendar, MapPin, DollarSign, Package, MessageSquare, Clock, CheckCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
@@ -49,6 +56,7 @@ const MyBookings = () => {
   const [user, setUser] = useState<any>(null);
   const [selectedEnquiryForChat, setSelectedEnquiryForChat] = useState<string | null>(null);
   const [selectedBookingForChat, setSelectedBookingForChat] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState("enquiries");
 
   useEffect(() => {
     fetchUserData();
@@ -165,28 +173,57 @@ const MyBookings = () => {
               </CardContent>
             </Card>
           ) : (
-            <Tabs defaultValue="enquiries" className="w-full">
-              <TabsList className="grid w-full grid-cols-3 mb-8 h-auto">
-                <TabsTrigger value="enquiries" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 text-xs sm:text-sm">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">Enquiries</span>
-                  <span className="text-xs">({pendingEnquiries.length})</span>
-                </TabsTrigger>
-                <TabsTrigger value="active" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 text-xs sm:text-sm">
-                  <Clock className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">Active</span>
-                  <span className="text-xs">({activeBookings.length})</span>
-                </TabsTrigger>
-                <TabsTrigger value="completed" className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 py-2 sm:py-3 px-2 text-xs sm:text-sm">
-                  <CheckCircle className="h-4 w-4 flex-shrink-0" />
-                  <span className="truncate">Done</span>
-                  <span className="text-xs">({completedBookings.length})</span>
-                </TabsTrigger>
-              </TabsList>
+            <div className="space-y-6">
+              {/* Mobile Dropdown */}
+              <div className="block sm:hidden">
+                <Select value={activeTab} onValueChange={setActiveTab}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="enquiries">
+                      <div className="flex items-center gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        <span>Enquiries ({pendingEnquiries.length})</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="active">
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-4 w-4" />
+                        <span>Active Bookings ({activeBookings.length})</span>
+                      </div>
+                    </SelectItem>
+                    <SelectItem value="completed">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4" />
+                        <span>Completed ({completedBookings.length})</span>
+                      </div>
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-              {/* Enquiries Tab */}
-              <TabsContent value="enquiries" className="space-y-6">
-                {pendingEnquiries.length === 0 ? (
+              {/* Desktop Tabs */}
+              <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full hidden sm:block">
+                <TabsList className="grid w-full grid-cols-3 mb-8">
+                  <TabsTrigger value="enquiries" className="flex items-center gap-2">
+                    <AlertCircle className="h-4 w-4" />
+                    Enquiries ({pendingEnquiries.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="active" className="flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Active Bookings ({activeBookings.length})
+                  </TabsTrigger>
+                  <TabsTrigger value="completed" className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4" />
+                    Completed ({completedBookings.length})
+                  </TabsTrigger>
+                </TabsList>
+              </Tabs>
+
+              {/* Content for both mobile and desktop */}
+              <div className="mt-6">{activeTab === "enquiries" && (
+                <div className="space-y-6">{pendingEnquiries.length === 0 ? (
                   <Card>
                     <CardContent className="py-12 text-center">
                       <AlertCircle className="h-12 w-12 mx-auto text-gray-400 mb-4" />
@@ -247,10 +284,11 @@ const MyBookings = () => {
                     </Card>
                   ))
                 )}
-              </TabsContent>
+                </div>
+              )}
 
-              {/* Active Bookings Tab */}
-              <TabsContent value="active" className="space-y-6">
+              {activeTab === "active" && (
+                <div className="space-y-6">
                 {activeBookings.length === 0 ? (
                   <Card>
                     <CardContent className="py-12 text-center">
@@ -343,10 +381,11 @@ const MyBookings = () => {
                     </Card>
                   ))
                 )}
-              </TabsContent>
+                </div>
+              )}
 
-              {/* Completed Tab */}
-              <TabsContent value="completed" className="space-y-6">
+              {activeTab === "completed" && (
+                <div className="space-y-6">
                 {completedBookings.length === 0 ? (
                   <Card>
                     <CardContent className="py-12 text-center">
@@ -428,10 +467,12 @@ const MyBookings = () => {
                     </Card>
                   ))
                 )}
-              </TabsContent>
-            </Tabs>
-          )}
-        </div>
+                </div>
+              )}
+              </div>
+            </div>
+          )
+        }</div>
       </main>
       <Footer />
       
