@@ -36,6 +36,8 @@ import PaymentSuccess from "./pages/payment/Success";
 import PaymentCancel from "./pages/payment/Cancel";
 import CompleteBooking from "./pages/booking/CompleteBooking";
 import AuthCallback from "./pages/auth/AuthCallback";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 
 const queryClient = new QueryClient();
 
@@ -73,6 +75,8 @@ const App = () => (
               </ProtectedRoute>
             } />
             <Route path="/services/:slug" element={<ServiceDetail />} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/terms-of-service" element={<TermsOfService />} />
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
             <Route path="/admin/login" element={<AdminLogin />} />
             <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

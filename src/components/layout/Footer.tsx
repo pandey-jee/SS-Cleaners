@@ -105,11 +105,11 @@ const Footer = () => {
               © {currentYear} SS PureCare. All rights reserved.
             </p>
             <div className="flex space-x-6">
-              <Link to="#" className="text-sm text-background/80 hover:text-background transition-colors">
+              <Link to="/privacy-policy" className="text-sm text-background/80 hover:text-background transition-colors">
                 Privacy Policy
               </Link>
-              <Link to="#" className="text-sm text-background/80 hover:text-background transition-colors">
-                Terms & Conditions
+              <Link to="/terms-of-service" className="text-sm text-background/80 hover:text-background transition-colors">
+                Terms of Service
               </Link>
             </div>
           </div>
