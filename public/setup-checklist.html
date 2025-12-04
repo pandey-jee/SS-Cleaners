@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Setup Checklist - SS Cleaners</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 32px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        .section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 12px;
+            border-left: 4px solid #667eea;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 24px;
+        }
+        .checklist {
+            list-style: none;
+        }
+        .checklist li {
+            padding: 12px;
+            margin: 8px 0;
+            background: white;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .checklist li:hover {
+            transform: translateX(5px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .checklist input[type="checkbox"] {
+            width: 24px;
+            height: 24px;
+            margin-right: 15px;
+            cursor: pointer;
+        }
+        .checklist li.checked {
+            background: #d1fae5;
+            text-decoration: line-through;
+            color: #666;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: auto;
+        }
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .status-ready {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status-config {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .link-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+        .link-box a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .link-box a:hover {
+            text-decoration: underline;
+        }
+        .code {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            overflow-x: auto;
+            margin: 10px 0;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .alert-info {
+            background: #dbeafe;
+            border-left: 4px solid #3b82f6;
+            color: #1e40af;
+        }
+        .alert-warning {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            color: #92400e;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e5e7eb;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 SS Cleaners Setup Checklist</h1>
+        <p class="subtitle">Complete these steps to fully configure your application</p>
+
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressBar">0%</div>
+        </div>
+
+        <div class="section">
+            <h2>✅ Already Done</h2>
+            <ul class="checklist">
+                <li class="checked">
+                    <input type="checkbox" checked disabled>
+                    <span>Gmail SMTP configured for emails</span>
+                    <span class="status-badge status-ready">READY</span>
+                </li>
+                <li class="checked">
+                    <input type="checkbox" checked disabled>
+                    <span>Auth callback page created</span>
+                    <span class="status-badge status-ready">READY</span>
+                </li>
+                <li class="checked">
+                    <input type="checkbox" checked disabled>
+                    <span>Real-time chat hooks implemented</span>
+                    <span class="status-badge status-ready">READY</span>
+                </li>
+                <li class="checked">
+                    <input type="checkbox" checked disabled>
+                    <span>Email diagnostics dashboard created</span>
+                    <span class="status-badge status-ready">READY</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="section">
+            <h2>🔧 Google OAuth Setup (Required)</h2>
+            <div class="alert alert-warning">
+                ⚠️ <strong>Action Required:</strong> Google OAuth will not work until you complete these steps in Google Cloud Console and Supabase Dashboard.
+            </div>
+
+            <ul class="checklist" id="oauthChecklist">
+                <li data-task="oauth1">
+                    <input type="checkbox" onchange="updateProgress()">
+                    <span>Create Google OAuth credentials in Google Cloud Console</span>
+                    <span class="status-badge status-config">NEEDS CONFIG</span>
+                </li>
+                <li data-task="oauth2">
+                    <input type="checkbox" onchange="updateProgress()">
+                    <span>Enable Google provider in Supabase Authentication</span>
+                    <span class="status-badge status-config">NEEDS CONFIG</span>
+                </li>
+                <li data-task="oauth3">
+                    <input type="checkbox" onchange="updateProgress()">
+                    <span>Add redirect URLs in Supabase</span>
+                    <span class="status-badge status-config">NEEDS CONFIG</span>
+                </li>
+                <li data-task="oauth4">
+                    <input type="checkbox" onchange="updateProgress()">
+                    <span>Run user profile trigger migration in Supabase SQL Editor</span>
+                    <span class="status-badge status-config">NEEDS CONFIG</span>
+                </li>
+            </ul>
+
+            <div class="link-box">
+                📖 <strong>Detailed Guide:</strong> 
+                <a href="../GOOGLE_OAUTH_SETUP.md" target="_blank">GOOGLE_OAUTH_SETUP.md</a>
+            </div>
+
+            <div class="link-box">
+                🔗 <strong>Quick Links:</strong><br>
+                <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console →</a><br>
+                <a href="https://supabase.com/dashboard/project/zvnkbxvvyqmxcygghdii/auth/providers" target="_blank">Supabase Auth Providers →</a><br>
+                <a href="https://supabase.com/dashboard/project/zvnkbxvvyqmxcygghdii/sql/new" target="_blank">Supabase SQL Editor →</a>
+            </div>
+
+            <div class="code">
+-- Run this in Supabase SQL Editor:
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.user_profiles (id, email, full_name, role)
+  VALUES (
+    NEW.id,
+    NEW.email,
+    COALESCE(NEW.raw_user_meta_data->>'full_name', NEW.email),
+    'user'
+  );
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>💬 Real-time Chat Setup (Required)</h2>
+            <div class="alert alert-info">
+                ℹ️ These steps enable instant messaging features like typing indicators and online presence.
+            </div>
+
+            <ul class="checklist" id="chatChecklist">
+                <li data-task="chat1">
+                    <input type="checkbox" onchange="updateProgress()">
+                    <span>Enable Realtime on conversations and messages tables</span>
+                    <span class="status-badge status-config">NEEDS CONFIG</span>
+                </li>
+                <li data-task="chat2">
+                    <input type="checkbox" onchange="updateProgress()">
+                    <span>Add is_read column to messages table (if not exists)</span>
+                    <span class="status-badge status-pending">OPTIONAL</span>
+                </li>
+            </ul>
+
+            <div class="link-box">
+                🔗 <a href="https://supabase.com/dashboard/project/zvnkbxvvyqmxcygghdii/sql/new" target="_blank">Open Supabase SQL Editor →</a>
+            </div>
+
+            <div class="code">
+-- Run this in Supabase SQL Editor:
+
+-- Enable realtime
+ALTER TABLE public.conversations REPLICA IDENTITY FULL;
+ALTER TABLE public.messages REPLICA IDENTITY FULL;
+
+ALTER PUBLICATION supabase_realtime ADD TABLE public.conversations;
+ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;
+
+-- Add is_read column (if not exists)
+ALTER TABLE public.messages 
+ADD COLUMN IF NOT EXISTS is_read BOOLEAN DEFAULT false;
+            </div>
+        </div>
+
+        <div class="section">
+            <h2>✨ Test Everything</h2>
+            <ul class="checklist" id="testChecklist">
+                <li data-task="test1">
+                    <input type="checkbox" onchange="updateProgress()">
+                    <span>Test email sending (check diagnostics dashboard)</span>
+                    <span class="status-badge status-pending">TEST</span>
+                </li>
+                <li data-task="test2">
+                    <input type="checkbox" onchange="updateProgress()">
+                    <span>Test Google OAuth login</span>
+                    <span class="status-badge status-pending">TEST</span>
+                </li>
+                <li data-task="test3">
+                    <input type="checkbox" onchange="updateProgress()">
+                    <span>Test real-time chat features</span>
+                    <span class="status-badge status-pending">TEST</span>
+                </li>
+            </ul>
+
+            <div class="link-box">
+                🧪 <strong>Test Links:</strong><br>
+                <a href="/email-diagnostics.html" target="_blank">Email Diagnostics →</a><br>
+                <a href="/login" target="_blank">Login Page (Test Google OAuth) →</a><br>
+                <a href="/admin/enquiries" target="_blank">Admin Chat (Test Real-time) →</a>
+            </div>
+        </div>
+
+        <div class="alert alert-info">
+            💡 <strong>Tip:</strong> Save this page as a bookmark! You can recheck items after server restarts.
+        </div>
+
+        <div style="text-align: center; margin-top: 40px;">
+            <a href="/" class="btn">Back to Home</a>
+            <a href="/admin/dashboard" class="btn" style="margin-left: 10px;">Go to Admin Dashboard</a>
+        </div>
+    </div>
+
+    <script>
+        function updateProgress() {
+            const checkboxes = document.querySelectorAll('#oauthChecklist input[type="checkbox"], #chatChecklist input[type="checkbox"], #testChecklist input[type="checkbox"]');
+            const total = checkboxes.length;
+            const checked = Array.from(checkboxes).filter(cb => cb.checked).length;
+            const percentage = Math.round((checked / total) * 100);
+            
+            const progressBar = document.getElementById('progressBar');
+            progressBar.style.width = percentage + '%';
+            progressBar.textContent = percentage + '%';
+
+            // Update parent li classes
+            checkboxes.forEach(cb => {
+                const li = cb.closest('li');
+                if (cb.checked) {
+                    li.classList.add('checked');
+                } else {
+                    li.classList.remove('checked');
+                }
+            });
+
+            // Save to localStorage
+            const state = {};
+            checkboxes.forEach(cb => {
+                const taskId = cb.closest('li').dataset.task;
+                if (taskId) {
+                    state[taskId] = cb.checked;
+                }
+            });
+            localStorage.setItem('setupProgress', JSON.stringify(state));
+        }
+
+        // Restore from localStorage
+        window.addEventListener('load', () => {
+            const saved = localStorage.getItem('setupProgress');
+            if (saved) {
+                const state = JSON.parse(saved);
+                Object.entries(state).forEach(([taskId, checked]) => {
+                    const li = document.querySelector(`li[data-task="${taskId}"]`);
+                    if (li) {
+                        const checkbox = li.querySelector('input[type="checkbox"]');
+                        if (checkbox) {
+                            checkbox.checked = checked;
+                        }
+                    }
+                });
+                updateProgress();
+            }
+        });
+    </script>
+</body>
+</html>

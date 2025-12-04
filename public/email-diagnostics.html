@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Diagnostics - SS Cleaners</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 30px;
+        }
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 30px 0;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+        .email-list {
+            margin-top: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #667eea;
+        }
+        .status-sent { color: #10b981; font-weight: 600; }
+        .status-failed { color: #ef4444; font-weight: 600; }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+        }
+        .test-section {
+            margin-top: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        .alert-info { background: #e0f2fe; color: #0369a1; border-left: 4px solid #0369a1; }
+        .alert-warning { background: #fef3c7; color: #92400e; border-left: 4px solid #f59e0b; }
+        .alert-success { background: #d1fae5; color: #065f46; border-left: 4px solid #10b981; }
+        .alert-error { background: #fee2e2; color: #991b1b; border-left: 4px solid #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 Email Diagnostics Dashboard</h1>
+        
+        <div id="loading" class="loading">
+            <h2>Loading email statistics...</h2>
+        </div>
+
+        <div id="content" style="display: none;">
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total Emails Sent</div>
+                    <div class="stat-value" id="totalEmails">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Sent Today</div>
+                    <div class="stat-value" id="todayEmails">0</div>
+                    <div class="stat-label">Limit: 500/day (Gmail)</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Successful</div>
+                    <div class="stat-value" id="successEmails">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Failed</div>
+                    <div class="stat-value" id="failedEmails">0</div>
+                </div>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <div class="email-list">
+                <h2>📬 Recent Emails (Last 20)</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Type</th>
+                            <th>Recipient</th>
+                            <th>Status</th>
+                            <th>Sent At</th>
+                        </tr>
+                    </thead>
+                    <tbody id="emailTable">
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="test-section">
+                <h3>🧪 Test Email Sending</h3>
+                <p>To test if emails are working, go to the admin panel and try sending a booking link to a customer.</p>
+                <button onclick="window.location.href='/admin/enquiries'">Go to Admin Enquiries</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const supabaseUrl = 'https://zvnkbxvvyqmxcygghdii.supabase.co'
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inp2bmtieHZ2eXFteGN5Z2doZGlpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MzIwOTg0NjEsImV4cCI6MjA0NzY3NDQ2MX0.gUDV0i4PcTCHZfwBLs-5oKODnRUvzkIEyTqeMVHSXvk'
+        
+        const { createClient } = supabase
+        const client = createClient(supabaseUrl, supabaseKey)
+
+        async function loadEmailStats() {
+            try {
+                // Fetch all email notifications
+                const { data: emails, error } = await client
+                    .from('email_notifications')
+                    .select('*')
+                    .order('created_at', { ascending: false })
+                    .limit(100)
+
+                if (error) throw error
+
+                // Calculate stats
+                const total = emails.length
+                const today = new Date().toISOString().split('T')[0]
+                const todayCount = emails.filter(e => e.created_at.startsWith(today)).length
+                const successCount = emails.filter(e => e.status === 'sent').length
+                const failedCount = emails.filter(e => e.status === 'failed').length
+
+                // Update UI
+                document.getElementById('totalEmails').textContent = total
+                document.getElementById('todayEmails').textContent = todayCount
+                document.getElementById('successEmails').textContent = successCount
+                document.getElementById('failedEmails').textContent = failedCount
+
+                // Show alerts
+                const alertContainer = document.getElementById('alertContainer')
+                
+                if (todayCount >= 450) {
+                    alertContainer.innerHTML += `
+                        <div class="alert alert-warning">
+                            ⚠️ <strong>Warning:</strong> You've sent ${todayCount} emails today. Gmail limit is 500/day.
+                        </div>
+                    `
+                } else if (todayCount >= 500) {
+                    alertContainer.innerHTML += `
+                        <div class="alert alert-error">
+                            🚫 <strong>Limit Reached:</strong> Gmail daily limit of 500 emails has been reached. 
+                            Emails will resume tomorrow.
+                        </div>
+                    `
+                } else {
+                    alertContainer.innerHTML += `
+                        <div class="alert alert-success">
+                            ✅ <strong>All Good:</strong> ${todayCount}/500 emails used today. ${500 - todayCount} remaining.
+                        </div>
+                    `
+                }
+
+                if (total === 0) {
+                    alertContainer.innerHTML += `
+                        <div class="alert alert-info">
+                            ℹ️ <strong>No emails found:</strong> No emails have been sent yet from this system.
+                        </div>
+                    `
+                }
+
+                // Populate table
+                const tableBody = document.getElementById('emailTable')
+                emails.slice(0, 20).forEach(email => {
+                    const row = document.createElement('tr')
+                    const date = new Date(email.created_at).toLocaleString()
+                    row.innerHTML = `
+                        <td>${email.notification_type}</td>
+                        <td>${email.recipient_email}</td>
+                        <td class="status-${email.status}">${email.status.toUpperCase()}</td>
+                        <td>${date}</td>
+                    `
+                    tableBody.appendChild(row)
+                })
+
+                // Show content
+                document.getElementById('loading').style.display = 'none'
+                document.getElementById('content').style.display = 'block'
+
+            } catch (error) {
+                console.error('Error loading stats:', error)
+                document.getElementById('loading').innerHTML = `
+                    <div class="alert alert-error">
+                        ❌ <strong>Error:</strong> ${error.message}
+                    </div>
+                `
+            }
+        }
+
+        // Load stats on page load
+        loadEmailStats()
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadEmailStats, 30000)
+    </script>
+</body>
+</html>
